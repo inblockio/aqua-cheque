@@ -1,21 +1,20 @@
-# Foundry Rust Monorepo Template
+# WAVS Monorepo Template
 
-![Rust](https://github.com/gakonst/foundry-rust-template/workflows/Rust/badge.svg)
+<!-- ![Rust](https://github.com/gakonst/foundry-rust-template/workflows/Rust/badge.svg)
 ![Solidity](https://github.com/gakonst/foundry-rust-template/workflows/Solidity/badge.svg)
 [![Telegram Chat][tg-badge]][tg-url]
 
 [tg-badge]:
   https://img.shields.io/endpoint?color=neon&style=flat-square&url=https%3A%2F%2Ftg.sumanjay.workers.dev%2Ffoundry_rs
-[tg-url]: https://t.me/foundry_rs
+[tg-url]: https://t.me/foundry_rs -->
 
-**Template for quickly getting started with developing Rust applications that
-leverage Foundry for EVM smart contract development.**
+**Template for quickly getting started with developing WAVS Rust applications**
 
 Continuous Integration is already set up to test both your Rust and Solidity
 code, as well as ensure formatting and that your Rust bindings match the
 Solidity build artifacts.
 
-## Directory Structure
+<!-- ## Directory Structure
 
 The project is structured as a mixed Rust workspace with a Foundry project under
 `contracts/` and typesafe auto-generated bindings to the contracts under
@@ -24,9 +23,14 @@ The project is structured as a mixed Rust workspace with a Foundry project under
 ```
 ├── Cargo.toml
 ├── app // <-- Your Rust application logic
-├── contracts // <- The smart contracts + tests using Foundry
 ├── crates
     └── bindings // <-- Generated bindings to the smart contracts' abis (like Typechain)
+``` -->
+
+## Install
+
+```bash
+forge init --template https://github.com/Lay3rLabs/wavs-foundry-template my-wavs
 ```
 
 ## Testing
@@ -41,12 +45,6 @@ Forge is using submodules to manage dependencies. Initialize the dependencies:
 If you are in the root directory of the project, run:
 
 ```bash
-forge install --root ./contracts
-```
-
-If you are in in `contracts/`:
-
-```bash
 forge install
 ```
 
@@ -55,34 +53,85 @@ Then, run the tests:
 If you are in the root directory of the project, run:
 
 ```bash
-forge test --root ./contracts
-```
-
-If you are in in `contracts/`:
-
-```bash
 forge test
 ```
 
-### Rust
-
-```
-cargo test
-```
-
-## Generating Rust bindings to the contracts
+## Rust
 
 Rust bindings to the contracts can be generated via `forge bind`, which requires
 first building your contracts:
 
-```
-forge build --root ./contracts
-forge bind --bindings-path ./crates/bindings --root ./contracts --crate-name bindings
+<!-- Any follow-on calls to `forge bind` will check that the generated bindings match
+the ones under the build files. If you want to re-generate your bindings, pass
+the `--overwrite` flag to your `forge bind` command. -->
+
+```bash
+forge build
+make bindings
 ```
 
-Any follow-on calls to `forge bind` will check that the generated bindings match
-the ones under the build files. If you want to re-generate your bindings, pass
-the `--overwrite` flag to your `forge bind` command.
+Then, you can run the tests:
+
+```bash
+cargo test
+```
+
+## WAVS Operations
+
+```bash
+forge build
+```
+
+Run the following in the WAVS repo (separate terminal)
+```bash
+# this is based on ebf8cf6bc001d8292696ef6883d55d749c41bdd9 in the WAVS repo
+docker compose up # <- in the WAVS repository
+```
+
+Upload ServiceManager from this repo
+
+```bash
+export CLI_EIGEN_CORE_DELEGATION_MANAGER=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.delegation_manager ~/wavs/cli/deployments.json' | tr -d '\r'`
+export CLI_EIGEN_CORE_REWARDS_COORDINATOR=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.rewards_coordinator ~/wavs/cli/deployments.json' | tr -d '\r'`
+export CLI_EIGEN_CORE_AVS_DIRECTORY=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.avs_directory ~/wavs/cli/deployments.json' | tr -d '\r'`
+export FOUNDRY_ANVIL_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+
+forge script ./script/WavsServiceManager.s.sol --rpc-url http://localhost:8545 --broadcast
+```
+
+Build WAVS WASI component
+
+```bash
+(cd components/eth-trigger-echo; cargo component build --release)
+
+mkdir -p ./compiled && cp ./target/wasm32-wasip1/release/*.wasm ./compiled/
+```
+
+Verify
+
+```bash
+# install wavs-cli
+# https://github.com/Lay3rLabs/WAVS/issues/277
+# - right now `E0308` is super annoying @ packages/wavs/src/submission/core.rs:426:13 ^ have to do a `result: result.into(),` for now.
+(cd lib/WAVS; cargo install --path ./packages/cli)
+
+cp ./lib/WAVS/packages/cli/wavs-cli.toml .
+
+# Local Exec
+# ./compiled/eth_trigger_echo.wasm does not work because it's relative in `read_component(path: impl AsRef<Path>) -> Vec<u8> ...  Path::new("../../")`
+wavs-cli exec --component $(pwd)/compiled/eth_trigger_echo.wasm --input testing
+
+# use the Eigenlayer deployed contracts
+mkdir -p .docker; docker cp wavs:/root/wavs/cli/deployments.json .docker/deployments.json
+
+# Actual deploy
+# - Service manager is from the script/WavsServiceManager.s.sol broadcast logs
+export WAVS_CLI_ETH_MNEMONIC="test test test test test test test test test test test junk"
+wavs-cli deploy-service --component $(pwd)/compiled/eth_trigger_echo.wasm  --service-manager 0x851356ae760d987E095750cCeb3bC6014560891C --data ./.docker
+
+wavs-cli add-task --input "hello testing!" --data ./.docker --service-id <Service-ID>
+```
+
 
 ## Installing Foundry
 

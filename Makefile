@@ -5,50 +5,52 @@ default: build
 
 # Define variables
 CARGO=cargo
-CRATES_FOLDER=crates
-CONTRACTS_PATH=./contracts
-BINDINGS_FOLDER=bindings
-BINDINGS_CRATES_FOLDER=$(CRATES_FOLDER)/$(BINDINGS_FOLDER)
-BINDINGS_OUT_PATH=$(CONTRACTS_PATH)/out/$(BINDINGS_FOLDER)
 
-# Target for generating bindings
+## bindings: generating bindings
 bindings:
-	rm -rf $(BINDINGS_CRATES_FOLDER)
-	rm -rf $(BINDINGS_OUT_PATH)
-
 # Generate new bindings
-	@forge bind --root $(CONTRACTS_PATH) --crate-name $(BINDINGS_FOLDER)
+	@forge bind --bindings-path ./crates/bindings --crate-name bindings --overwrite \
+		--alloy --alloy-version v0.9.2
 
-# Move bindings to the correct location
-	@mv -f $(BINDINGS_OUT_PATH) $(CRATES_FOLDER)
-
-# Target for building the project
+## build: building the project
 build: bindings
 	@$(CARGO) build
 
-# Target for building the project in release mode
+## build-release: building the project in release mode
 build-release: bindings
 	@$(CARGO) build --release
 
-# Target for cleaning the project
+## update-submodules: update the git submodules
+update-submodules:
+	@git submodule update --init --recursive
+
+## clean: cleaning the project files
 clean:
-	@forge clean --root $(CONTRACTS_PATH)
+	@forge clean
 	@$(CARGO) clean
 
-# Target for formatting the code
+## fmt: formatting solidity and rust code
 fmt:
-	@forge fmt --check --root $(CONTRACTS_PATH)
+	@forge fmt --check
 	@$(CARGO) fmt
 
-# Target for running tests
+## test: running forge and rust tests
 test:
-	@forge test --root $(CONTRACTS_PATH)
+	@forge test
 	@$(CARGO) test
 
-# Target for installing forge dependencies
+## setup: installing forge dependencies
 setup:
-	@forge install --root $(CONTRACTS_PATH)
+	@forge install
 
 
 # Declare phony targets
 .PHONY: build build-release clean fmt bindings
+
+.PHONY: help
+help: Makefile
+	@echo
+	@echo " Choose a command run"
+	@echo
+	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
+	@echo
