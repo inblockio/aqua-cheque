@@ -4,6 +4,7 @@ members = [
     "crates/bindings",
     "components/*",
 ]
+resolver = "2"
 
 [workspace.package]
 edition = "2021"
@@ -16,6 +17,9 @@ rust-version = "1.80.0"
 
 [workspace.dependencies]
 bindings = { path = "crates/bindings" }
-# must match the bindings Cargo
+# alloy must match the bindings Cargo.toml version, git, and features
 alloy = { git = "https://github.com/alloy-rs/alloy", rev = "v0.9.2", features = ["sol-types", "contract"] }
 wit-bindgen-rt = { version = "0.32.0", features = ["bitflags"] }
+serde = { version = "1.0.211", features = ["derive"] }
+serde_json = "1.0.127"
+layer-wasi = { git = "https://github.com/Lay3rLabs/avs-toolkit", tag = "v0.2.1" }

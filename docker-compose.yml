@@ -1,0 +1,63 @@
+# FROM: github.com/Lay3rLabs/wavs @ ebf8cf6bc001d8292696ef6883d55d749c41bdd9
+# .env files copied over from the WAVS packages
+#
+# docker compose up
+#
+# docker exec -it wavs bash
+#
+services:
+  anvil:
+    image: "ghcr.io/foundry-rs/foundry:stable"
+    platform: linux/amd64
+    container_name: "anvil"
+    network_mode: "host"
+    ports:
+      - "8545:8545"
+    environment:
+      ANVIL_IP_ADDR: 0.0.0.0
+    command: ["anvil", "--no-cors"]
+
+  # The main instance all WAVS interaction will happen from
+  wavs:
+    build: lib/WAVS/Dockerfile
+    image: "ghcr.io/lay3rlabs/wavs:local"
+    container_name: "wavs"
+    stop_signal: SIGKILL
+    depends_on: ["anvil"]
+    network_mode: "host"
+    env_file: "./.env"
+    ports:
+      - "8000:8000"
+    environment:
+      WAVS_HOME: "/wavs/packages/wavs"
+      WAVS_CLI_HOME: "/wavs/packages/cli"
+      WAVS_AGGREGATOR_HOME: "/wavs/packages/aggregator"
+    command: ["wavs"]
+    volumes:
+      - "./:/wavs" # TODO: move to the lib/WAVS/ ?
+      - "./.docker/cli:/root/wavs/cli/"
+
+  aggregator:
+    image: "ghcr.io/lay3rlabs/wavs:local"
+    container_name: "wavs-aggregator"
+    stop_signal: SIGKILL
+    depends_on: ["wavs"]
+    env_file: "./.env"
+    ports:
+      - "8001:8001"
+    command: ["aggregator"]
+    volumes:
+      - "./lib/WAVS/packages/aggregator:/wavs"
+    network_mode: "host"
+
+  deploy-eigenlayer:
+    image: "ghcr.io/lay3rlabs/wavs:local"
+    container_name: "wavs-deploy-eigenlayer"
+    depends_on: ["wavs", "anvil", "aggregator"]
+    restart: "no"
+    env_file: "./.env"
+    command: ["wavs-cli", "deploy-core"]
+    volumes:
+      - "./lib/WAVS/packages/cli:/wavs"
+      - "./.docker/cli:/root/wavs/cli/"
+    network_mode: "host"

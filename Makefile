@@ -16,6 +16,15 @@ bindings:
 build: bindings
 	@$(CARGO) build
 
+## wasi-build: building the WAVS wasi component(s)
+wasi-build:
+	@for component in $(shell ls ./components); do \
+		echo "Building component: $$component"; \
+		(cd components/$$component; cargo component build --release); \
+	done
+	@mkdir -p ./compiled
+	@cp ./target/wasm32-wasip1/release/*.wasm ./compiled/
+
 ## build-release: building the project in release mode
 build-release: bindings
 	@$(CARGO) build --release

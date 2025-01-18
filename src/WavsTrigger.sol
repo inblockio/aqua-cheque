@@ -37,12 +37,8 @@ contract WavsTrigger {
         ILayerTrigger.TriggerId triggerId = nextTriggerId;
 
         // Create the trigger
-        Trigger memory trigger = Trigger({
-            serviceId: serviceId,
-            workflowId: workflowId,
-            creator: msg.sender,
-            data: data
-        });
+        Trigger memory trigger =
+            Trigger({serviceId: serviceId, workflowId: workflowId, creator: msg.sender, data: data});
 
         // update storages
         triggersById[triggerId] = trigger;
@@ -68,5 +64,4 @@ contract WavsTrigger {
             data: trigger.data
         });
     }
-
 }

@@ -5,17 +5,13 @@ import {ECDSAServiceManagerBase} from "@eigenlayer/middleware/src/unaudited/ECDS
 import {ECDSAStakeRegistry} from "@eigenlayer/middleware/src/unaudited/ECDSAStakeRegistry.sol";
 import {IERC1271Upgradeable} from "@openzeppelin-upgrades/contracts/interfaces/IERC1271Upgradeable.sol";
 import {ECDSAUpgradeable} from "@openzeppelin-upgrades/contracts/utils/cryptography/ECDSAUpgradeable.sol";
-// import "@openzeppelin/contracts/utils/Strings.sol";
 import {ILayerTrigger} from "./WavsTrigger.sol";
 import {ILayerServiceManager} from "wavs/interfaces/ILayerServiceManager.sol";
 
 contract WavsServiceManager is ECDSAServiceManagerBase {
     // Modifiers
     modifier onlyOperator() {
-        require(
-            ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender),
-            "Operator must be the caller"
-        );
+        require(ECDSAStakeRegistry(stakeRegistry).operatorRegistered(msg.sender), "Operator must be the caller");
         _;
     }
 
@@ -38,41 +34,26 @@ contract WavsServiceManager is ECDSAServiceManagerBase {
     event AddedSignedPayloadForTrigger(ILayerTrigger.TriggerId indexed triggerId);
 
     // Functions
-    constructor(
-        address _avsDirectory,
-        address _stakeRegistry,
-        address _rewardsCoordinator,
-        address _delegationManager
-    )
-        ECDSAServiceManagerBase(
-            _avsDirectory,
-            _stakeRegistry,
-            _rewardsCoordinator,
-            _delegationManager
-        )
+    constructor(address _avsDirectory, address _stakeRegistry, address _rewardsCoordinator, address _delegationManager)
+        ECDSAServiceManagerBase(_avsDirectory, _stakeRegistry, _rewardsCoordinator, _delegationManager)
     {}
 
-    function addSignedPayloadForTrigger(
-        ILayerServiceManager.SignedPayload calldata signedPayload
-    ) public {
+    function addSignedPayloadForTrigger(ILayerServiceManager.SignedPayload calldata signedPayload) public {
         bytes32 message = keccak256(abi.encode(signedPayload.payload));
         bytes32 ethSignedMessageHash = ECDSAUpgradeable.toEthSignedMessageHash(message);
         bytes4 magicValue = IERC1271Upgradeable.isValidSignature.selector;
 
         if (
-            !(magicValue ==
-                ECDSAStakeRegistry(stakeRegistry).isValidSignature(
-                    ethSignedMessageHash,
-                    signedPayload.signature
-                ))
+            !(
+                magicValue
+                    == ECDSAStakeRegistry(stakeRegistry).isValidSignature(ethSignedMessageHash, signedPayload.signature)
+            )
         ) {
             revert InvalidSignature();
         }
 
-        SignedData memory signedData = SignedData({
-            data: signedPayload.payload.data,
-            signature: signedPayload.signature
-        });
+        SignedData memory signedData =
+            SignedData({data: signedPayload.payload.data, signature: signedPayload.signature});
 
         // updating the storage with data responses
         signedDataByTriggerId[signedPayload.payload.triggerId] = signedData;
@@ -81,9 +62,7 @@ contract WavsServiceManager is ECDSAServiceManagerBase {
         emit AddedSignedPayloadForTrigger(signedPayload.payload.triggerId);
     }
 
-    function addSignedPayloadForTriggerMulti(
-        ILayerServiceManager.SignedPayload[] calldata signedPayloads
-    ) public {
+    function addSignedPayloadForTriggerMulti(ILayerServiceManager.SignedPayload[] calldata signedPayloads) public {
         for (uint32 i = 0; i < signedPayloads.length; i++) {
             WavsServiceManager(address(this)).addSignedPayloadForTrigger(signedPayloads[i]);
         }

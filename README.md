@@ -10,24 +10,11 @@
 
 **Template for quickly getting started with developing WAVS Rust applications**
 
-Continuous Integration is already set up to test both your Rust and Solidity
-code, as well as ensure formatting and that your Rust bindings match the
-Solidity build artifacts.
+A comprehensive template for developing WAVS (WebAssembly AVS) applications using Rust and Solidity. This template provides a pre-configured development environment with integrated testing frameworks for both Rust and Solidity components.
 
-<!-- ## Directory Structure
+## Installation
 
-The project is structured as a mixed Rust workspace with a Foundry project under
-`contracts/` and typesafe auto-generated bindings to the contracts under
-`crates/bindings/`.
-
-```
-├── Cargo.toml
-├── app // <-- Your Rust application logic
-├── crates
-    └── bindings // <-- Generated bindings to the smart contracts' abis (like Typechain)
-``` -->
-
-## Install
+Create a new project using this template:
 
 ```bash
 forge init --template https://github.com/Lay3rLabs/wavs-foundry-template my-wavs
@@ -38,19 +25,21 @@ forge init --template https://github.com/Lay3rLabs/wavs-foundry-template my-wavs
 Given the repository contains both Solidity and Rust code, there's 2 different
 workflows.
 
-### Solidity
+### Setting up the Environment
 
-Forge is using submodules to manage dependencies. Initialize the dependencies:
-
-If you are in the root directory of the project, run:
+Initialize the submodule dependencies:
 
 ```bash
 forge install
 ```
 
-Then, run the tests:
+Build the contracts:
 
-If you are in the root directory of the project, run:
+```bash
+forge build
+```
+
+Run the tests:
 
 ```bash
 forge test
@@ -61,12 +50,7 @@ forge test
 Rust bindings to the contracts can be generated via `forge bind`, which requires
 first building your contracts:
 
-<!-- Any follow-on calls to `forge bind` will check that the generated bindings match
-the ones under the build files. If you want to re-generate your bindings, pass
-the `--overwrite` flag to your `forge bind` command. -->
-
 ```bash
-forge build
 make bindings
 ```
 
@@ -76,77 +60,65 @@ Then, you can run the tests:
 cargo test
 ```
 
-## WAVS Operations
+## WAVS
+
+Build the latest solidity:
 
 ```bash
 forge build
 ```
 
-Run the following in the WAVS repo (separate terminal)
+Install the WAVS CLI:
+
 ```bash
-# this is based on ebf8cf6bc001d8292696ef6883d55d749c41bdd9 in the WAVS repo
-docker compose up # <- in the WAVS repository
+(cd lib/WAVS; cargo install --path ./packages/cli)
 ```
 
-Upload ServiceManager from this repo
+```bash
+cp .env.example .env
+
+# [!] Get your key from: https://openweathermap.org/
+# Update the WAVS_ENV_OPEN_WEATHER_API_KEY in the .env file with your key`
+
+cp ./lib/WAVS/packages/wavs/wavs.toml .
+cp ./lib/WAVS/packages/cli/wavs-cli.toml .
+
+# start the WAVS network
+docker compose up
+```
+
+Deploy Eigenlayer and upload your WAVS Service contract
 
 ```bash
-export CLI_EIGEN_CORE_DELEGATION_MANAGER=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.delegation_manager ~/wavs/cli/deployments.json' | tr -d '\r'`
-export CLI_EIGEN_CORE_REWARDS_COORDINATOR=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.rewards_coordinator ~/wavs/cli/deployments.json' | tr -d '\r'`
-export CLI_EIGEN_CORE_AVS_DIRECTORY=`docker exec -it wavs bash -c 'jq -r .eigen_core.local.avs_directory ~/wavs/cli/deployments.json' | tr -d '\r'`
+docker_cmd="docker exec -it wavs bash -c"
+export CLI_EIGEN_CORE_DELEGATION_MANAGER=`${docker_cmd} 'jq -r .eigen_core.local.delegation_manager ~/wavs/cli/deployments.json' | tr -d '\r'`
+export CLI_EIGEN_CORE_REWARDS_COORDINATOR=`${docker_cmd}  'jq -r .eigen_core.local.rewards_coordinator ~/wavs/cli/deployments.json' | tr -d '\r'`
+export CLI_EIGEN_CORE_AVS_DIRECTORY=`${docker_cmd}  'jq -r .eigen_core.local.avs_directory ~/wavs/cli/deployments.json' | tr -d '\r'`
 export FOUNDRY_ANVIL_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
 
 forge script ./script/WavsServiceManager.s.sol --rpc-url http://localhost:8545 --broadcast
 ```
 
-Build WAVS WASI component
+Build WAVS WASI component(s)
 
 ```bash
-(cd components/eth-trigger-echo; cargo component build --release)
+# build all components/*
+make wasi-build
 
-mkdir -p ./compiled && cp ./target/wasm32-wasip1/release/*.wasm ./compiled/
+# Verify execution works as expected without deploying
+wavs-cli exec --component $(pwd)/compiled/eth_trigger_weather.wasm --input Nashville,TN
 ```
 
-Verify
+Deploy service and verify with adding a task
 
 ```bash
-# install wavs-cli
-# https://github.com/Lay3rLabs/WAVS/issues/277
-# - right now `E0308` is super annoying @ packages/wavs/src/submission/core.rs:426:13 ^ have to do a `result: result.into(),` for now.
-(cd lib/WAVS; cargo install --path ./packages/cli)
+source .env
 
-cp ./lib/WAVS/packages/cli/wavs-cli.toml .
+sudo chmod 0666 .docker/cli/deployments.json
 
-# Local Exec
-# ./compiled/eth_trigger_echo.wasm does not work because it's relative in `read_component(path: impl AsRef<Path>) -> Vec<u8> ...  Path::new("../../")`
-wavs-cli exec --component $(pwd)/compiled/eth_trigger_echo.wasm --input testing
+wavs-cli deploy-service --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
+  --service-manager 0x851356ae760d987E095750cCeb3bC6014560891C \
+  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[]}'
 
-# use the Eigenlayer deployed contracts
-mkdir -p .docker; docker cp wavs:/root/wavs/cli/deployments.json .docker/deployments.json
-
-# Actual deploy
-# - Service manager is from the script/WavsServiceManager.s.sol broadcast logs
-export WAVS_CLI_ETH_MNEMONIC="test test test test test test test test test test test junk"
-wavs-cli deploy-service --component $(pwd)/compiled/eth_trigger_echo.wasm  --service-manager 0x851356ae760d987E095750cCeb3bC6014560891C --data ./.docker
-
-wavs-cli add-task --input "hello testing!" --data ./.docker --service-id <Service-ID>
+wavs-cli add-task --input "Nashville,TN" --data ./.docker/cli --service-id <Service-ID>
 ```
-
-
-## Installing Foundry
-
-First run the command below to get `foundryup`, the Foundry toolchain installer:
-
-```sh
-curl -L https://foundry.paradigm.xyz | bash
-```
-
-Then, in a new terminal session or after reloading your `PATH`, run it to get
-the latest `forge` and `cast` binaries:
-
-```sh
-foundryup
-```
-
-For more, see the official
-[docs](https://github.com/gakonst/foundry#installation).
