@@ -1,5 +1,7 @@
 use alloy::{
-    hex, primitives::Address, providers::{Provider, ProviderBuilder}
+    hex,
+    primitives::Address,
+    providers::{Provider, ProviderBuilder},
 };
 use bindings::wavsservicemanager::WavsServiceManager;
 use eyre::Result;
@@ -9,16 +11,19 @@ async fn main() -> Result<()> {
     let url = "http://127.0.0.1:8545";
     let provider = ProviderBuilder::new().on_builtin(url).await?;
 
-    if provider.get_block_number().await? == 0 {
+    let block = provider.get_block_number().await?;
+    if block == 0 {
         println!("No blocks / interactions on {url} yet.");
         return Ok(());
     }
 
+    println!("Block: {:?}", block);
+
     // update me before running
-    let contract_address = "0x851356ae760d987e095750cceb3bc6014560891c".parse::<Address>()?;
+    let contract_address = "0x70e0ba845a1a0f2da3359c97e0285013525ffc49".parse::<Address>()?;
     let contract = WavsServiceManager::new(contract_address, provider.clone());
 
-    let resp = contract.signedDataByTriggerId(1).call().await?;
+    let resp = contract.getData(1).call().await?;
 
     let hex = resp.data;
     println!("Weather Response Hex: {:?}\n", hex);

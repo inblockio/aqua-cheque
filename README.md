@@ -65,7 +65,7 @@ cargo test
 Build the latest solidity:
 
 ```bash
-forge build
+make build
 ```
 
 Install the WAVS CLI:
@@ -112,13 +112,17 @@ wavs-cli exec --component $(pwd)/compiled/eth_trigger_weather.wasm --input Nashv
 Deploy service and verify with adding a task
 
 ```bash
-source .env
-
 sudo chmod 0666 .docker/cli/deployments.json
 
+v=$(cast sig-event "NewTrigger(bytes)"); v=${v:2}; echo $v
 wavs-cli deploy-service --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
-  --service-manager 0x851356ae760d987E095750cCeb3bC6014560891C \
-  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[]}'
+  --trigger-event-name ${v} \
+  --trigger eth-contract-event \
+  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[],"workflowId":"default","componentId":"default"}'
 
 wavs-cli add-task --input "Nashville,TN" --data ./.docker/cli --service-id <Service-ID>
+
+# Where the call address is the service manager in ./.docker/cli/deployments.json
+hex_bytes=$(cast decode-abi "getData(uint64)(bytes)" `cast call 0x0e801d84fa97b50751dbf25036d067dcf18858bf "getData(uint64)" 1`)
+echo `cast --to-ascii $hex_bytes`
 ```

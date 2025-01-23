@@ -9,9 +9,15 @@ repository.workspace = true
 [dependencies]
 wit-bindgen-rt = { workspace = true }
 layer-wasi = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = {workspace = true}
-reqwest = {version = "0.12.12"}
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { version = "0.12.9", features = ["json"] }
+alloy-sol-macro = { workspace = true }
+wstd = { workspace = true }
+layer-climb = { workspace = true }
+alloy-sol-types = { workspace = true }
+anyhow = { workspace = true }
+alloy-contract = { workspace = true }
 
 [lib]
 crate-type = ["cdylib"]
@@ -25,13 +31,3 @@ lto = true
 
 [package.metadata.component]
 package = "component:eth-trigger-weather"
-
-[package.metadata.component.target]
-path = "../../lib/WAVS/wit"
-world = "eth-trigger-world"
-
-[package.metadata.component.target.dependencies]
-"wasi:io" = "=0.2.0"
-"wasi:clocks" = "=0.2.0"
-"wasi:http" = "=0.2.0"
-"wasi:random" = "=0.2.0"

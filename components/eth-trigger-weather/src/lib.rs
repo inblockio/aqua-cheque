@@ -1,27 +1,33 @@
-#[allow(warnings)]
-mod bindings;
-use bindings::Guest;
-use layer_wasi::{block_on, Reactor, Request, WasiPollable};
+mod trigger;
+use layer_wasi::{
+    bindings::world::{Guest, TriggerAction},
+    export_layer_trigger_world,
+    wasi::{Request, WasiPollable},
+};
 use serde::{Deserialize, Serialize};
+use trigger::{decode_trigger_event, encode_trigger_output};
+use wstd::runtime::{block_on, Reactor};
 
 struct Component;
 
 impl Guest for Component {
-    fn process_eth_trigger(input: Vec<u8>) -> std::result::Result<Vec<u8>, String> {
-        println!("process_eth_trigger Received input: {:?}", input); // Nashville,TN as input
+    fn run(trigger_action: TriggerAction) -> std::result::Result<Vec<u8>, String> {
+        let (trigger_id, req) =
+            decode_trigger_event(trigger_action.data).map_err(|e| e.to_string())?;
 
-        if !input.contains(&b',') {
+        if !req.contains(&b',') {
             return Err("Input must be in the format of City,State".to_string());
         }
-        let input = std::str::from_utf8(&input).unwrap(); // TODO:
+        let input = std::str::from_utf8(&req).unwrap(); // TODO:
 
         // open weather API, not wavs specific
         let api_key = std::env::var("WAVS_ENV_OPEN_WEATHER_API_KEY")
             .or(Err("missing env var `WAVS_ENV_OPEN_WEATHER_API_KEY`".to_string()))?;
 
-        block_on(|reactor| async move {
+        let res = block_on(move |reactor| async move {
             let loc: Result<LocDataNested, String> =
                 get_location(&reactor, api_key.clone(), input).await;
+
             let location = match loc {
                 Ok(data) => data,
                 Err(e) => return Err(e),
@@ -36,7 +42,12 @@ impl Guest for Component {
                 }
                 Err(e) => Err(e),
             }
-        })
+        });
+
+        match res {
+            Ok(data) => Ok(encode_trigger_output(trigger_id, &data)),
+            Err(e) => Err(e),
+        }
     }
 }
 
@@ -47,10 +58,7 @@ async fn get_location(
 ) -> Result<LocDataNested, String> {
     let url: &str = "http://api.openweathermap.org/geo/1.0/direct";
     let loc_input_formatted = format!("{},US", loc_input);
-    let params = [
-        ("q", loc_input_formatted.as_str()),
-        ("appid", app_key.as_str()),
-    ];
+    let params = [("q", loc_input_formatted.as_str()), ("appid", app_key.as_str())];
 
     let url_with_params = reqwest::Url::parse_with_params(url, &params).unwrap();
     let mut req = Request::get(url_with_params.as_str())?;
@@ -63,7 +71,6 @@ async fn get_location(
 
     match response {
         Ok(response) => {
-            println!("{:?}", response);
             let finalresp = response.json::<LocationData>().map_err(|e| {
                 let resp_body = response.body;
                 let resp_str = String::from_utf8_lossy(&resp_body);
@@ -72,11 +79,9 @@ async fn get_location(
                     e, resp_str, url_with_params,
                 )
             })?;
-            println!("{:?}", finalresp);
             return Ok(finalresp[0].clone());
         }
         Err(e) => {
-            println!("{:?}", e);
             return Err(e.to_string());
         }
     }
@@ -105,9 +110,7 @@ async fn get_weather(
     let response = reactor.send(req).await;
 
     match response {
-        // print out either option
         Ok(response) => {
-            println!("{:?}", response);
             let finalresp = response.json::<WeatherResponse>().map_err(|e| {
                 let resp_body = response.body;
                 let resp_str = String::from_utf8_lossy(&resp_body);
@@ -116,11 +119,9 @@ async fn get_weather(
                     e, resp_str, url_with_params,
                 )
             })?;
-            println!("{:?}", finalresp.main.temp);
             return Ok(finalresp);
         }
         Err(e) => {
-            println!("{:?}", e);
             return Err(e.to_string());
         }
     }
@@ -221,4 +222,4 @@ pub struct Wind {
     deg: i64,
 }
 
-bindings::export!(Component with_types_in bindings);
+export_layer_trigger_world!(Component);

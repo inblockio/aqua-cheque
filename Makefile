@@ -54,7 +54,7 @@ setup:
 
 
 # Declare phony targets
-.PHONY: build build-release clean fmt bindings
+.PHONY: build build-release clean fmt bindings test
 
 .PHONY: help
 help: Makefile

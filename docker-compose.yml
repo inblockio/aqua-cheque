@@ -19,7 +19,9 @@ services:
 
   # The main instance all WAVS interaction will happen from
   wavs:
-    build: lib/WAVS/Dockerfile
+    build:
+      context: ./lib/WAVS
+      dockerfile: Dockerfile
     image: "ghcr.io/lay3rlabs/wavs:local"
     container_name: "wavs"
     stop_signal: SIGKILL
@@ -45,7 +47,7 @@ services:
     env_file: "./.env"
     ports:
       - "8001:8001"
-    command: ["aggregator"]
+    command: ["wavs-aggregator"]
     volumes:
       - "./lib/WAVS/packages/aggregator:/wavs"
     network_mode: "host"
@@ -56,7 +58,7 @@ services:
     depends_on: ["wavs", "anvil", "aggregator"]
     restart: "no"
     env_file: "./.env"
-    command: ["wavs-cli", "deploy-core"]
+    command: ["wavs-cli", "deploy-eigen-core"]
     volumes:
       - "./lib/WAVS/packages/cli:/wavs"
       - "./.docker/cli:/root/wavs/cli/"

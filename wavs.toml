@@ -25,11 +25,8 @@ cors_allowed_origins = [
 # the directory to store the data. Default is "/var/wavs"
 # data = "~/wavs/data"
 
-# chosen eth chain names
-eth_chains = ["local"]
-
-# chosen cosmos chain name
-# cosmos_chain = "layer-local"
+# active chain names to watch for triggers
+active_trigger_chains = ["local"]
 
 max_wasm_fuel = 1_000_000
 
@@ -71,6 +68,11 @@ gas_price = 0.0053
 gas_denom = "untrn"
 
 [chains.eth.local]
+chain_id = "31337"
+ws_endpoint = "ws://localhost:8545"
+http_endpoint = "http://localhost:8545"
+
+[chains.eth.local-aggregator]
 chain_id = "31337"
 ws_endpoint = "ws://localhost:8545"
 http_endpoint = "http://localhost:8545"
