@@ -19,8 +19,8 @@ async fn main() -> Result<()> {
 
     println!("Block: {:?}", block);
 
-    // update me before running
-    let contract_address = "0x70e0ba845a1a0f2da3359c97e0285013525ffc49".parse::<Address>()?;
+    // TODO: update me with your contract!
+    let contract_address = "0x851356ae760d987E095750cCeb3bC6014560891C".parse::<Address>()?;
     let contract = WavsServiceManager::new(contract_address, provider.clone());
 
     let resp = contract.getData(1).call().await?;
