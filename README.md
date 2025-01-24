@@ -73,6 +73,7 @@ make build
 Install the WAVS CLI:
 
 ```bash
+# MacOS: if you get permission errors: eval `ssh-agent -s`; ssh-add
 (cd lib/WAVS; cargo install --path ./packages/cli)
 ```
 
@@ -85,7 +86,14 @@ cp .env.example .env
 cp ./lib/WAVS/packages/wavs/wavs.toml .
 cp ./lib/WAVS/packages/cli/cli.toml .
 
-# start the WAVS network
+# MacOS Docker:
+# Docker Engine -> Settings -> Resources -> Network -> 'Enable Host Networking'
+# or
+# brew install chipmk/tap/docker-mac-net-connect && sudo brew services start chipmk/tap/docker-mac-net-connect
+
+# TODO: this is a temp workaround for MacOS (running anvil out of compose)
+anvil
+
 docker compose up --build
 ```
 
@@ -108,10 +116,12 @@ Build WAVS WASI component(s)
 
 ```bash
 # build all components/*
+# https://github.com/bytecodealliance/cargo-component#installation / cargo binstall cargo-component
 make wasi-build
 
 # Verify execution works as expected without deploying
-wavs-cli exec --component $(pwd)/compiled/eth_trigger_weather.wasm --input Nashville,TN
+# TODO: currently broken upstream
+# wavs-cli exec --component $(pwd)/compiled/eth_trigger_weather.wasm --input Nashville,TN
 ```
 
 Deploy service and verify with adding a task
@@ -119,15 +129,18 @@ Deploy service and verify with adding a task
 ```bash
 sudo chmod 0666 .docker/cli/deployments.json
 
-v=$(cast sig-event "NewTrigger(bytes)"); v=${v:2}; echo $v
+trigger_event=$(cast sig-event "NewTrigger(bytes)"); echo $trigger_event
 
-wavs-cli deploy-service --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
-  --trigger-event-name ${v} \
+service_info=`wavs-cli deploy-service --log-level=error --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
+  --trigger-event-name ${trigger_event:2} \
   --trigger eth-contract-event \
   --submit-address ${SERVICE_MANAGER_ADDRESS} \
-  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[],"workflowId":"default","componentId":"default"}'
+  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[],"workflowId":"default","componentId":"default"}'`
 
-wavs-cli add-task --input "Nashville,TN" --data ./.docker/cli --service-id <Service-ID>
+echo "Service info: $service_info"
+
+SERVICE_ID=`echo $service_info | jq -r .service[0]`; echo "Service ID: $SERVICE_ID"
+wavs-cli add-task --input "Nashville,TN" --data ./.docker/cli --service-id ${SERVICE_ID}
 
 # Where the call address is the service manager in ./.docker/cli/deployments.json
 hex_bytes=$(cast decode-abi "getData(uint64)(bytes)" `cast call ${SERVICE_MANAGER_ADDRESS} "getData(uint64)" 1`)
