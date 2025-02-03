@@ -3,7 +3,7 @@ use alloy::{
     primitives::Address,
     providers::{Provider, ProviderBuilder},
 };
-use bindings::wavsservicemanager::WavsServiceManager;
+use bindings::wavssubmit::WavsSubmit;
 use eyre::Result;
 
 #[tokio::main]
@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
 
     // TODO: update me with your contract!
     let contract_address = "0x851356ae760d987E095750cCeb3bC6014560891C".parse::<Address>()?;
-    let contract = WavsServiceManager::new(contract_address, provider.clone());
+    let contract = WavsSubmit::new(contract_address, provider.clone());
 
     let resp = contract.getData(1).call().await?;
 
