@@ -1,7 +1,3 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "lib/WAVS"]
-	path = lib/WAVS
-	url = https://github.com/Lay3rLabs/WAVS
-	tag = v0.3.0-alpha4

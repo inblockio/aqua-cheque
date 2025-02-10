@@ -24,8 +24,8 @@ forge init --template Lay3rLabs/wavs-foundry-template my-wavs
 ### Solidity
 
 ```bash
-# Initialize the submodule dependencies
-forge install
+# Initialize the dependencies
+forge install && npm install
 
 # Build the contracts
 forge build
@@ -52,7 +52,10 @@ make test
 
 ```bash
 # MacOS: if you get permission errors: eval `ssh-agent -s` && ssh-add
-(cd lib/WAVS; cargo install --path ./packages/cli)
+# (cd lib/WAVS; cargo install --path ./packages/cli)
+# (cd lib/WAVS; just docker-build)
+
+docker cp $(docker create --name tc ghcr.io/lay3rlabs/wavs:0.3.0-alpha5-amd64):/usr/local/bin/wavs-cli ~/.cargo/bin/wavs-cli && docker rm tc
 ```
 
 ### Start Anvil, WAVS, and Deploy Eigenlayer
@@ -74,27 +77,20 @@ make start-all
 ### Upload your WAVS Service Manager
 
 ```bash
+# Deploy service-manager
+sudo chmod 0666 .docker/cli/deployments.json
+wavs-cli deploy-eigen-service-manager --data ./.docker/cli
+export SERVICE_MANAGER=`jq -r '.eigen_service_managers.local | .[-1]' .docker/cli/deployments.json`
+
 # Deploy
 export FOUNDRY_ANVIL_PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
-forge script ./script/WavsSubmit.s.sol --rpc-url http://localhost:8545 --broadcast
+forge script ./script/Deploy.s.sol ${SERVICE_MANAGER} --sig "run(string)" --rpc-url http://localhost:8545 --broadcast
 
 # Grab deployed service manager from script file output
 export SERVICE_HANDLER_ADDR=`jq -r '.service_handler' "./.docker/cli/script_deploy.json"`
 echo "Service Handler Addr: $SERVICE_HANDLER_ADDR"
 
 export TRIGGER_ADDR=`jq -r '.trigger' "./.docker/cli/script_deploy.json"`; echo "Trigger Addr: $TRIGGER_ADDR"
-
-# add read-write access
-sudo chmod 0666 .docker/cli/deployments.json
-
-wavs-cli deploy-eigen-service-manager --data ./.docker/cli --service-handler ${SERVICE_HANDLER_ADDR}
-export SERVICE_MANAGER=0x0e801d84fa97b50751dbf25036d067dcf18858bf
-
-# Set the service manager in the service handler
-# - handleAddPayload can only be called by onlyServiceManager
-# - add-task requires to getServiceManager() from the contract to deploy
-cast send ${SERVICE_HANDLER_ADDR} "setServiceManager(address)" ${SERVICE_MANAGER} --rpc-url http://localhost:8545 --private-key $FOUNDRY_ANVIL_PRIVATE_KEY
-# cast call ${SERVICE_HANDLER_ADDR} "getServiceManager()(address)" --rpc-url http://localhost:8545
 ```
 
 ### Build WASI components
@@ -115,18 +111,16 @@ make wasi-build
 # Contract trigger function signature to listen for
 trigger_event=$(cast sig-event "NewTrigger(bytes)"); echo "Trigger Event: $trigger_event"
 
-service_info=`wavs-cli deploy-service --log-level=error --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
+wavs-cli deploy-service --log-level=error --quiet-results=false --data ./.docker/cli --component $(pwd)/compiled/eth_trigger_weather.wasm \
   --trigger-event-name ${trigger_event:2} \
   --trigger eth-contract-event \
   --trigger-address ${TRIGGER_ADDR} \
-  --submit-address ${SERVICE_MANAGER} \
-  --service-config '{"fuelLimit":100000000,"maxGas":5000000,"hostEnvs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[],"workflowId":"default","componentId":"default"}'`
+  --submit-address ${SERVICE_HANDLER_ADDR} \
+  --service-config '{"fuel_limit":100000000,"max_gas":5000000,"host_envs":["WAVS_ENV_OPEN_WEATHER_API_KEY"],"kv":[],"workflow_id":"default","component_id":"default"}'
 
-echo "Service info: $service_info"
 
 # Submit AVS request -> chain
-SERVICE_ID=`echo $service_info | jq -r .service[0]`; echo "Service ID: $SERVICE_ID"
-wavs-cli add-task --input "Nashville,TN" --data ./.docker/cli --service-id ${SERVICE_ID}
+cast send ${TRIGGER_ADDR} "addTrigger(bytes)" `cast format-bytes32-string Nashville,TN` --rpc-url http://localhost:8545 --private-key $FOUNDRY_ANVIL_PRIVATE_KEY
 
 # Grab data from the contract directly
 hex_bytes=$(cast decode-abi "getData(uint64)(bytes)" `cast call ${SERVICE_HANDLER_ADDR} "getData(uint64)" 1`)
