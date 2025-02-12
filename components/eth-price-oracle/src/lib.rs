@@ -1,5 +1,5 @@
 mod trigger;
-use trigger::{decode_trigger_event, encode_trigger_output};
+use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction};
 use serde::{Deserialize, Serialize};
@@ -13,9 +13,9 @@ struct Component;
 export!(Component with_types_in bindings);
 
 impl Guest for Component {
-    fn run(trigger_action: TriggerAction) -> std::result::Result<Vec<u8>, String> {
-        let (trigger_id, req) =
-            decode_trigger_event(trigger_action.data).map_err(|e| e.to_string())?;
+    fn run(action: TriggerAction) -> std::result::Result<Vec<u8>, String> {
+        let (trigger_id, req, dest) =
+            decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
         // Convert bytes to string and parse first char as u64
         let input = std::str::from_utf8(&req).map_err(|e| e.to_string())?;
@@ -38,7 +38,10 @@ impl Guest for Component {
         });
 
         match res {
-            Ok(data) => Ok(encode_trigger_output(trigger_id, &data)),
+            Ok(data) => match dest {
+                Destination::Ethereum => Ok(encode_trigger_output(trigger_id, &data)),
+                Destination::CliOutput => Ok(data),
+            },
             Err(e) => Err(e),
         }
     }

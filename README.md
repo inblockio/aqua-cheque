@@ -40,13 +40,15 @@ forge test
 
 ```bash
 make wasi-build
-
-# TODO: currently broken upstream
-# Verify execution works as expected without deploying
-# wavs-cli exec --component $(pwd)/compiled/eth_price_oracle.wasm --input `cast format-bytes32-string 1`
 ```
 
 > You can also use `make build` to build the contracts and components in one command
+
+### Execute WASI component directly
+
+```bash
+make wasi-exec
+```
 
 ## WAVS
 
@@ -84,7 +86,7 @@ make deploy-service
 ## Trigger the Service
 
 ```bash
-# Trigger contract via `script/Trigger.s.sol`
+# Trigger contract via `script/Trigger.s.sol` for BTC
 COIN_MARKET_CAP_ID=1 make trigger-service
 ```
 
