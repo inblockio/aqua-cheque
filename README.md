@@ -2,7 +2,7 @@
 
 **Template for quickly getting started with developing WAVS Rust applications**
 
-A comprehensive template for developing WAVS (WebAssembly AVS) applications using Rust and Solidity. This template provides a pre-configured development environment with integrated testing frameworks for both Rust and Solidity components.
+A comprehensive template for developing WAVS (WebAssembly AVS) applications using Rust and Solidity on Linux and MacOS. This template provides a pre-configured development environment with integrated testing frameworks for both Rust and Solidity components.
 
 ## System Requirements
 
