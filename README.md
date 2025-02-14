@@ -42,14 +42,17 @@ A comprehensive template for developing WAVS (WebAssembly AVS) applications usin
 
 ```bash
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+rustup toolchain install stable
+rustup target add wasm32-wasip2
 ```
 
 ### Upgrade Rust
 
 ```bash
-# Remove old targets
-rustup target remove wasm32-wasi
-rustup target remove wasm32-wasip1
+# Remove old targets if present
+rustup target remove wasm32-wasi || true
+rustup target remove wasm32-wasip1 || true
 
 # Update and add required target
 rustup update stable
