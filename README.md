@@ -84,7 +84,7 @@ wkg config --default-registry wa.dev
 forge init --template Lay3rLabs/wavs-foundry-template my-wavs
 ```
 
-> Run `make help` to seel all available commands and environment variable overrides.
+> Run `make help` to see all available commands and environment variable overrides.
 
 ### Solidity
 
