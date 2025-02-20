@@ -28,7 +28,7 @@ build: _build_forge wasi-build
 wasi-build:
 	@for component in $(shell ls ./components); do \
 		echo "Building component: $$component"; \
-		(cd components/$$component; cargo component build --release); \
+		(cd components/$$component; cargo component build --release; cargo fmt); \
 	done
 	@mkdir -p ./compiled
 	@cp ./target/wasm32-wasip1/release/*.wasm ./compiled/
