@@ -93,11 +93,11 @@ jobs:
     - name: Run tests
       run: |
         make deploy-contracts
-        sleep 1
+        sleep 2
         TRIGGER_EVENT="NewTrigger(bytes)" make deploy-service
-        sleep 1
+        sleep 2
         COIN_MARKET_CAP_ID=1 make trigger-service
-        sleep 1
+        sleep 2
 
     # `strings | grep BTC` verifies the output contains BTC from the price oracle example
     - name: Run show result
