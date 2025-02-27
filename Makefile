@@ -21,6 +21,9 @@ SERVICE_TRIGGER_ADDR?=`jq -r '.trigger' "./.docker/script_deploy.json"`
 SERVICE_SUBMISSION_ADDR?=`jq -r '.service_handler' "./.docker/script_deploy.json"`
 COIN_MARKET_CAP_ID?=1
 
+## check-requirements: verify system requirements are installed
+check-requirements: check-node check-jq check-cargo
+
 ## build: building the project
 build: _build_forge wasi-build
 
@@ -65,14 +68,14 @@ test:
 	@forge test
 
 ## setup: install initial dependencies
-setup:
+setup: check-requirements
 	@forge install
 	@npm install
 
 ## start-all: starting anvil and WAVS with docker compose
 # running anvil out of compose is a temp work around for MacOS
-start-all: clean-docker
-	@rm .docker/*.json || true
+start-all: clean-docker setup-env
+	@rm --interactive=never .docker/*.json || true
 	@bash -ec 'anvil & anvil_pid=$$!; trap "kill -9 $$anvil_pid 2>/dev/null" EXIT; $(SUDO) docker compose up; wait'
 
 ## deploy-contracts: deploying the contracts | SERVICE_MANAGER_ADDR, RPC_URL
@@ -122,3 +125,39 @@ help: Makefile
 	@echo
 	@sed -n 's/^##//p' $< | column -t -s ':' |  sed -e 's/^/ /'
 	@echo
+
+# helpers
+
+.PHONY: setup-env
+setup-env:
+	@if [ ! -f .env ]; then \
+		if [ -f .env.example ]; then \
+			echo "Creating .env file from .env.example..."; \
+			cp .env.example .env; \
+			echo ".env file created successfully!"; \
+		fi; \
+	fi
+
+# check versions
+
+check-command:
+	@command -v $(1) > /dev/null 2>&1 || (echo "Command $(1) not found. Please install $(1), reference the System Requirements section"; exit 1)
+
+.PHONY: check-node
+check-node:
+	@$(call check-command,node)
+	@NODE_VERSION=$$(node --version); \
+	MAJOR_VERSION=$$(echo $$NODE_VERSION | sed 's/^v\([0-9]*\)\..*/\1/'); \
+	if [ $$MAJOR_VERSION -lt 21 ]; then \
+		echo "Error: Node.js version $$NODE_VERSION is less than the required v21."; \
+		echo "Please upgrade Node.js to v21 or higher."; \
+		exit 1; \
+	fi
+
+.PHONY: check-jq
+check-jq:
+	@$(call check-command,jq)
+
+.PHONY: check-cargo
+check-cargo:
+	@$(call check-command,cargo)
