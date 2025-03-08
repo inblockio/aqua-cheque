@@ -22,8 +22,7 @@ pub fn decode_trigger_event(trigger_data: TriggerData) -> Result<(U256, Vec<u8>,
 }
 
 pub fn encode_trigger_output(cheque_id: U256, output: impl AsRef<[u8]>) -> Vec<u8> {
-    solidity::DataWithId { chequeId: cheque_id, data: output.as_ref().to_vec().into() }
-        .abi_encode()
+    solidity::DataWithId { chequeId: cheque_id, data: output.as_ref().to_vec().into() }.abi_encode()
 }
 
 mod solidity {

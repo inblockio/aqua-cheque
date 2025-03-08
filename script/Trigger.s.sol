@@ -13,15 +13,20 @@ contract Trigger is Common {
         string calldata coinMarketCapID
     ) public {
         vm.startBroadcast(_privateKey);
+
+        address sender = vm.addr(1);
+        address receiver = vm.addr(2);
+
         ChequeTrigger trigger = ChequeTrigger(
             vm.parseAddress(serviceTriggerAddr)
         );
 
         // TODO: Update this to the right information
-        trigger.addTrigger(abi.encodePacked(coinMarketCapID));
+        // trigger.addTrigger(abi.encodePacked(coinMarketCapID));
+        trigger.addTrigger(sender, receiver, 1, "Rug the contract 2=====");
 
         ICheque.ChequeId triggerId = trigger.nextChequeId();
-        console.log("Cheque TriggerId", ITypes.TriggerId.unwrap(triggerId));
+        console.log("Cheque TriggerId", ICheque.ChequeId.unwrap(triggerId));
         vm.stopBroadcast();
     }
 }
