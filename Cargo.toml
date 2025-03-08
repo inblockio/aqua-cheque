@@ -1,5 +1,5 @@
 [workspace]
-members = [
+members = [ "check-wasm-api",
     "components/*",
 ]
 resolver = "2"
