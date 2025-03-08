@@ -45,6 +45,14 @@ contract ChequeTrigger {
         emit ICheque.ChequeDeposited(_chequeId, abi.encode(_triggerInfo));
     }
 
+    // function nextTriggerId() external view returns (ICheque.ChequeId memory _chequeId){
+    //     return this.nextChequeId;
+    // }
+
+    function nextTriggerId() external view returns (ICheque.ChequeId) {
+        return nextChequeId; // Correct function call
+    }
+
     function getChequeInfo(
         ICheque.ChequeId chequeId
     ) external view returns (ICheque.ChequeInfo memory _chequeInfo) {

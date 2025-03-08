@@ -16,6 +16,7 @@ interface ICheque {
         uint256 amount;
         string note;
         bool isPaid;
+        // bytes aquaTree;
     }
 
     struct ChequeInfo {

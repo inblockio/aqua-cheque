@@ -16,20 +16,41 @@ contract ShowResult is Common {
     ) public {
         vm.startBroadcast(_privateKey);
 
-        ChequeContract submit = new ChequeContract(
-            IWavsServiceManager(vm.parseAddress(serviceHandlerAddr))
+        // ChequeContract submit = ChequeContract(
+        //     vm.parseAddress(serviceHandlerAddr)
+        // );
+
+        ChequeContract submit = ChequeContract(
+            payable(vm.parseAddress(serviceHandlerAddr))
         );
-        ChequeTrigger trigger = new ChequeTrigger();
+
+        ChequeTrigger trigger = ChequeTrigger(
+            vm.parseAddress(serviceTriggerAddr)
+        );
 
         ICheque.ChequeId triggerId = trigger.nextChequeId();
+
         console.log(
             "Fetching data for cheque TriggerId",
             ICheque.ChequeId.unwrap(triggerId)
         );
-        ICheque.ChequeInfo memory _checkInfo = submit.getCheque(triggerId);
+
+        // ICheque.ChequeId counter = ICheque.ChequeId.wrap(10);
+
+        ICheque.ChequeInfo memory _checkInfo = trigger.getChequeInfo(triggerId);
         bytes memory data = abi.encode(_checkInfo);
-        console.log("Data:", string(_checkInfo.data));
+        // console.log("Data:", string(_checkInfo.data));
+        ICheque.Cheque memory decodedData = abi.decode(
+            _checkInfo.data,
+            (ICheque.Cheque)
+        );
+
         console.log("Cheque ID:", ICheque.ChequeId.unwrap(_checkInfo.chequeId));
+        console.log("Cheque Sender:", decodedData.sender);
+        console.log("Cheque Receiver:", decodedData.receiver);
+        console.log("Cheque Amount:", decodedData.amount);
+        console.log("Cheque Note:", decodedData.note);
+        console.log("Cheque isPaid:", decodedData.isPaid);
 
         vm.stopBroadcast();
     }

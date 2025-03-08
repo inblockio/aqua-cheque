@@ -58,7 +58,7 @@ async fn get_price_feed(_id: u64) -> Result<Cheque, String> {
     Ok(Cheque {
         sender: "0x...".to_string(),
         receiver: "0x...".to_string(),
-        amount: 1,
+        amount: 10,
         note: "First Test".to_string(),
         is_paid: false,
     })

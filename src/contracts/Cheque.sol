@@ -78,7 +78,7 @@ contract ChequeContract is IWavsServiceHandler {
             dataWithId.data,
             (ICheque.Cheque)
         );
-        // depositCheque(_cheque.sender, _cheque.receiver, _cheque.amount, _cheque.note, true);
+        this.depositCheque(_cheque.sender, _cheque.receiver, _cheque.note,  _cheque.amount, false);
         _signatures[dataWithId.chequeId] = _signature;
     }
 
