@@ -1,0 +1,25 @@
+{
+  "name": "identity-claim",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node ./dist/index.js",
+    "trust": "node ./dist/eth_trust_manager.js",
+    "start": "npm run build && npm run dev"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "aqua-js-sdk": "github:inblockio/aqua-js-sdk",
+    "ethers": "^6.13.5",
+    "tsup": "^8.4.0"
+  }
+}
