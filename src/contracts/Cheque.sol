@@ -115,7 +115,8 @@ contract ChequeContract is IWavsServiceHandler {
     }
 
     // Fallback function (in case non-matching calls are made)
-    fallback() external payable {
-        emit ICheque.FundsReceived(msg.sender, msg.value);
-    }
+    // Disabled this because its a global fallback payable function that cause chaos
+    // fallback() external payable {
+    //     emit ICheque.FundsReceived(msg.sender, msg.value);
+    // }
 }
