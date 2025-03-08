@@ -15,7 +15,9 @@ contract ChequeTrigger {
         address sender,
         address receiver,
         uint256 amount,
-        string memory note
+        string memory note,
+        bytes memory aquaTree,
+        bytes memory formContent
     ) external {
         // Get the next trigger id
         nextChequeId = ICheque.ChequeId.wrap(
@@ -29,7 +31,9 @@ contract ChequeTrigger {
             receiver: receiver,
             amount: amount,
             note: note,
-            isPaid: false
+            isPaid: false,
+            aquaTree: aquaTree,
+            formContent: formContent
         });
 
         // Update storages

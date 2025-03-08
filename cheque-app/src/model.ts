@@ -1,5 +1,6 @@
 export interface ChequeData {
     sender : string,
     receiver : string,
-    amount :  number
+    amount :  number,
+    note: string
 }

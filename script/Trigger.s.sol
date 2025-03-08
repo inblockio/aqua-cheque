@@ -20,10 +20,11 @@ contract Trigger is Common {
         ChequeTrigger trigger = ChequeTrigger(
             vm.parseAddress(serviceTriggerAddr)
         );
-
+        bytes memory aquaTree =  abi.encode("{}");
+        bytes memory formContent =  abi.encode("{}");
         // TODO: Update this to the right information
         // trigger.addTrigger(abi.encodePacked(coinMarketCapID));
-        trigger.addTrigger(sender, receiver, 1, "Rug the contract 2=====");
+        trigger.addTrigger(sender, receiver, 1, "Rug the contract 2=====", aquaTree, formContent);
 
         ICheque.ChequeId triggerId = trigger.nextChequeId();
         console.log("Cheque TriggerId", ICheque.ChequeId.unwrap(triggerId));

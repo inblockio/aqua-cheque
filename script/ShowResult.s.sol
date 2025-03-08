@@ -35,9 +35,10 @@ contract ShowResult is Common {
             ICheque.ChequeId.unwrap(triggerId)
         );
 
-        // ICheque.ChequeId counter = ICheque.ChequeId.wrap(10);
+        ICheque.ChequeId counter = ICheque.ChequeId.wrap(1);
 
         ICheque.ChequeInfo memory _checkInfo = trigger.getChequeInfo(triggerId);
+        // ICheque.ChequeInfo memory _checkInfo = submit.getCheque(counter);
         bytes memory data = abi.encode(_checkInfo);
         // console.log("Data:", string(_checkInfo.data));
         ICheque.Cheque memory decodedData = abi.decode(

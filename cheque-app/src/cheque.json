@@ -1,6 +1,7 @@
 {
-    "sender": "0xbdc64c49bf736cfe1b8233b083d3d632f26feb27",
-    "receiver": "0xbdc64c49bf736cfe1b8233b083d3d632f26feb27",
-    "amount": "0.3",
-    "currency": "ETH"
+    "sender": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    "receiver": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
+    "amount": "10",
+    "currency": "ETH",
+    "note": "RUG THE CONTRACT"
 }

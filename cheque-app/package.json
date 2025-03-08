@@ -2,12 +2,12 @@
   "name": "identity-claim",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "bankCheque.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node ./dist/index.js",
+    "dev": "node ./dist/bankCheque.js",
     "trust": "node ./dist/eth_trust_manager.js",
     "start": "npm run build && npm run dev"
   },

@@ -16,7 +16,8 @@ interface ICheque {
         uint256 amount;
         string note;
         bool isPaid;
-        // bytes aquaTree;
+        bytes aquaTree;
+        bytes formContent;
     }
 
     struct ChequeInfo {
@@ -24,10 +25,7 @@ interface ICheque {
         bytes data;
     }
 
-    event ChequeDeposited(
-        ChequeId chequeId,
-        bytes data
-    );
+    event ChequeDeposited(ChequeId chequeId, bytes data);
 
     event ChequePaid(
         uint256 chequeId,

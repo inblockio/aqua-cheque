@@ -19,8 +19,11 @@ contract TriggerTest is Test {
     }
 
     function testChequeTrigger() public {
-        chequeTrigger.addTrigger(sender, receiver, 1, "Rug the contract");
 
+        bytes memory aquaTree =  abi.encode("{}");
+        bytes memory formContent =  abi.encode("{}");
+        chequeTrigger.addTrigger(sender, receiver, 1, "Rug the contract", aquaTree, formContent);
+ 
         ICheque.ChequeId chequeId = ICheque.ChequeId.wrap(1);
         ICheque.ChequeInfo memory chequeInfo = chequeTrigger.getChequeInfo(
             chequeId

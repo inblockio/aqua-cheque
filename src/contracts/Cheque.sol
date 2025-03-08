@@ -42,7 +42,9 @@ contract ChequeContract is IWavsServiceHandler {
         address _receiver,
         string memory _note,
         uint256 amount,
-        bool isPaid
+        bool isPaid,
+        bytes memory aquaTree,
+        bytes memory formContent
     ) external {
         // require(msg.value > 0, "Cheque amount must be greater than zero");
         ICheque.Cheque memory _cheque = ICheque.Cheque({
@@ -50,7 +52,9 @@ contract ChequeContract is IWavsServiceHandler {
             receiver: _receiver,
             amount: amount,
             note: _note,
-            isPaid: isPaid
+            isPaid: isPaid,
+            aquaTree: aquaTree,
+            formContent: formContent
         });
 
         cheques[chequeCounter] = _cheque;
@@ -78,7 +82,7 @@ contract ChequeContract is IWavsServiceHandler {
             dataWithId.data,
             (ICheque.Cheque)
         );
-        this.depositCheque(_cheque.sender, _cheque.receiver, _cheque.note,  _cheque.amount, false);
+        this.depositCheque(_cheque.sender, _cheque.receiver, _cheque.note,  _cheque.amount, false, _cheque.aquaTree, _cheque.formContent);
         _signatures[dataWithId.chequeId] = _signature;
     }
 

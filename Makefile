@@ -39,7 +39,7 @@ wasi-build:
 
 ## wasi-exec: executing the WAVS wasi component(s) | COMPONENT_FILENAME, COIN_MARKET_CAP_ID
 wasi-exec:
-	@$(WAVS_CMD) exec --log-level=info --data /data/.docker --home /data \
+	@$(WAVS_CMD) exec --log-level=debug --data /data/.docker --home /data \
 	--component "/data/compiled/${COMPONENT_FILENAME}" \
 	--input `cast format-bytes32-string $(COIN_MARKET_CAP_ID)`
 
