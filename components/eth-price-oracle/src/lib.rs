@@ -1,7 +1,11 @@
+mod api_checks;
+mod models;
 mod trigger;
+use models::{AquaPayload, FileObject};
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 use wavs_wasi_chain::http::{fetch_json, http_request_get};
 pub mod bindings;
+use crate::api_checks::{file_object_to_aqua_tree, verify_aqua_data};
 use crate::bindings::{export, Guest, TriggerAction};
 use serde::{Deserialize, Serialize};
 use wstd::{http::HeaderValue, runtime::block_on};
@@ -21,8 +25,18 @@ impl Guest for Component {
         let id = input.chars().next().ok_or("Empty input")?;
         let id = id.to_digit(16).ok_or("Invalid hex digit")? as u64;
 
+        let payload: FileObject = FileObject{
+            fileName: "cheque.json".to_string(),
+            fileContent: "{\n  \"forms_sender\": \"0xbdc64c49bf736cfe1b8233b083d3d632f26feb27\",\n      \"forms_receiver\": \"\",\n      \"forms_amount\": \"0.3\",\n      \"forms_currency\": \"ETH\"\n}".to_string(),
+            path: "./".to_string()
+        };
+
         let res = block_on(async move {
-            let resp_data = get_price_feed(id).await?;
+            let resp_data = file_object_to_aqua_tree(
+                "http://164.92.183.228:3600//file/object/".to_string().as_str(),
+                &payload,
+            )
+            .await?;
             println!("resp_data: {:?}", resp_data);
             serde_json::to_vec(&resp_data).map_err(|e| e.to_string())
         })?;

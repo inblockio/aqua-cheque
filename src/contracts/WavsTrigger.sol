@@ -2,7 +2,7 @@
 pragma solidity 0.8.22;
 
 import {ISimpleTrigger} from "interfaces/IWavsTrigger.sol";
-
+ 
 contract SimpleTrigger is ISimpleTrigger {
     /// @inheritdoc ISimpleTrigger
     TriggerId public nextTriggerId;
