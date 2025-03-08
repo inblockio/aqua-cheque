@@ -52,7 +52,7 @@ async fn file_object_to_aqua_tree(url: &str, payload: &FileObject) -> Result<Str
 
     Ok(response_str)
 }
-
+ 
 
 // Function to post the JSON payload using the WAVS Ethereum AVS HTTP implementation
 async fn verify_aqua_data(url: &str, payload: &AquaPayload) -> Result<String, String> {

@@ -7,7 +7,10 @@ rust-version.workspace = true
 repository.workspace = true
 
 [dependencies]
-wit-bindgen-rt = {workspace = true}
+wit-bindgen-rt = { workspace = true }
+wasi = "0.14.1"
+wit-bindgen = "0.39.0"
+# tokio = { version = "1", features = ["full"] }
 wavs-wasi-chain = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -15,7 +18,7 @@ alloy-sol-macro = { workspace = true }
 wstd = { workspace = true }
 alloy-sol-types = { workspace = true }
 anyhow = { workspace = true }
-wasi-http = { workspace = true }  # Use the version from your workspace
+# wasi-http = { workspace = true }       # Use the version from your workspace
 
 [lib]
 crate-type = ["cdylib"]
@@ -30,3 +33,4 @@ lto = true
 [package.metadata.component]
 package = "component:eth-price-oracle"
 target = "wavs:worker/layer-trigger-world@0.3.0"
+
