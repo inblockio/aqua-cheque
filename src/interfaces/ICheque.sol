@@ -2,8 +2,11 @@
 pragma solidity ^0.8.20;
 
 interface ICheque {
+    /// @notice ChequeId is a unique identifier for a cheque trigger
+    type ChequeId is uint256;
+
     struct DataWithId {
-        ChequeId triggerId;
+        ChequeId chequeId;
         bytes data;
     }
 
@@ -17,19 +20,12 @@ interface ICheque {
 
     struct ChequeInfo {
         ChequeId chequeId;
-        address sender;
-        address receiver;
-        uint256 amount;
-        string note;
-        bool isPaid;
+        bytes data;
     }
 
     event ChequeDeposited(
-        uint256 chequeId,
-        address indexed sender,
-        address indexed receiver,
-        uint256 amount,
-        string note
+        ChequeId chequeId,
+        bytes data
     );
 
     event ChequePaid(
@@ -65,7 +61,4 @@ interface ICheque {
         );
 
     function chequeCounter() external view returns (uint256);
-
-    /// @notice ChequeId is a unique identifier for a cheque trigger
-    type ChequeId is uint64;
 }

@@ -22,11 +22,18 @@ contract TriggerTest is Test {
         chequeTrigger.addTrigger(sender, receiver, 1, "Rug the contract");
 
         ICheque.ChequeId chequeId = ICheque.ChequeId.wrap(1);
-        ICheque.ChequeInfo memory chequeInfo = chequeTrigger
-            .getChequeInfo(chequeId);
+        ICheque.ChequeInfo memory chequeInfo = chequeTrigger.getChequeInfo(
+            chequeId
+        );
 
-        assertEq(chequeInfo.sender, sender);
-        assertEq(chequeInfo.note, "Rug the contract");
+        // ✅ Fix: Change `storage` to `memory`
+        ICheque.Cheque memory _cheque = abi.decode(
+            chequeInfo.data,
+            (ICheque.Cheque) // Ensure the struct type matches exactly
+        );
+
+        assertEq(_cheque.sender, sender);
+        assertEq(_cheque.note, "Rug the contract");
         assertEq(
             ICheque.ChequeId.unwrap(chequeInfo.chequeId),
             ICheque.ChequeId.unwrap(chequeId)

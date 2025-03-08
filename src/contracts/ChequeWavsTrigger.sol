@@ -6,11 +6,9 @@ import {ICheque} from "interfaces/ICheque.sol";
 contract ChequeTrigger {
     ICheque.ChequeId public nextChequeId;
 
+    /// @notice Mapping of cheques
     mapping(ICheque.ChequeId _chequeId => ICheque.Cheque _trigger)
         public chequesById;
-    // @notice See ISimpleTrigger.triggerIdsByCreator
-    mapping(address _creator => ICheque.ChequeId[] _triggerIds)
-        internal _triggerIdsByCreator;
 
     // @inheritdoc ISimpleTrigger
     function addTrigger(
@@ -36,26 +34,15 @@ contract ChequeTrigger {
 
         // Update storages
         chequesById[_chequeId] = _trigger;
-        _triggerIdsByCreator[msg.sender].push(_chequeId);
+        // _triggerIdsByCreator[msg.sender].push(_chequeId);
 
-        // ICheque.ChequeInfo memory _triggerInfo = ICheque.ChequeInfo({
-        //     chequeId: _chequeId,
-        //     sender: sender,
-        //     receiver: receiver,
-        //     amount: amount,
-        //     note: note,
-        //     isPaid: false
-        // });
-        
-        // uint256 chequeId = uint256(_chequeId);
+        ICheque.ChequeInfo memory _triggerInfo = ICheque.ChequeInfo({
+            chequeId: _chequeId,
+            data: abi.encode(_trigger)
+        });
+
         // emit NewTrigger(abi.encode(_triggerInfo));
-        emit ICheque.ChequeDeposited(
-             ICheque.ChequeId.unwrap(_chequeId),
-            sender,
-            receiver,
-            amount,
-            note
-        );
+        emit ICheque.ChequeDeposited(_chequeId, abi.encode(_triggerInfo));
     }
 
     function getChequeInfo(
@@ -64,18 +51,14 @@ contract ChequeTrigger {
         ICheque.Cheque storage _cheque = chequesById[chequeId];
         _chequeInfo = ICheque.ChequeInfo({
             chequeId: chequeId,
-            sender: _cheque.sender,
-            receiver: _cheque.receiver,
-            amount: _cheque.amount,
-            note: _cheque.note,
-            isPaid: _cheque.isPaid
+            data: abi.encode(_cheque)
         });
     }
 
     // @inheritdoc ISimpleTrigger
-    function triggerIdsByCreator(
-        address _creator
-    ) external view returns (ICheque.ChequeId[] memory _triggerIds) {
-        _triggerIds = _triggerIdsByCreator[_creator];
-    }
+    // function triggerIdsByCreator(
+    //     address _creator
+    // ) external view returns (ICheque.ChequeId[] memory _triggerIds) {
+    //     _triggerIds = _triggerIdsByCreator[_creator];
+    // }
 }

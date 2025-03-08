@@ -11,6 +11,13 @@ contract ChequeContract is IWavsServiceHandler {
     /// @notice Service manager instance
     IWavsServiceManager private _serviceManager;
 
+    /// @notice Mapping of cheques
+    mapping(ICheque.ChequeId _chequeId => ICheque.Cheque _trigger)
+        public chequesById;
+
+    /// @notice Mapping of trigger signatures
+    mapping(ICheque.ChequeId _chequeId => bytes _signature) internal _signatures;
+
     mapping(uint256 => ICheque.Cheque) public cheques;
     uint256 public chequeCounter;
 
@@ -30,28 +37,27 @@ contract ChequeContract is IWavsServiceHandler {
 
     // Function to deposit a cheque
     function depositCheque(
+        address sender,
         address _receiver,
         string memory _note,
-        uint256 amount
-    ) external payable {
+        uint256 amount,
+        bool isPaid
+    ) external {
         // require(msg.value > 0, "Cheque amount must be greater than zero");
-
-        cheques[chequeCounter] = ICheque.Cheque({
-            sender: msg.sender,
+        ICheque.Cheque memory _cheque = ICheque.Cheque({
+            sender: sender,
             receiver: _receiver,
-            // amount: msg.value,
             amount: amount,
             note: _note,
-            isPaid: false
+            isPaid: isPaid
         });
 
+        cheques[chequeCounter] = _cheque;
+        
+        ICheque.ChequeId counter = ICheque.ChequeId.wrap(chequeCounter);
         emit ICheque.ChequeDeposited(
-            chequeCounter,
-            msg.sender,
-            _receiver,
-            // msg.value,
-            amount,
-            _note
+            counter,
+            abi.encode(_cheque)
         );
         chequeCounter++;
     }
@@ -61,6 +67,7 @@ contract ChequeContract is IWavsServiceHandler {
         bytes calldata _data,
         bytes calldata _signature
     ) external {
+
         _serviceManager.validate(_data, _signature);
 
         ICheque.DataWithId memory dataWithId = abi.decode(
@@ -68,9 +75,14 @@ contract ChequeContract is IWavsServiceHandler {
             (ICheque.DataWithId)
         );
 
-        // _signatures[dataWithId.triggerId] = _signature;
-        // _datas[dataWithId.triggerId] = dataWithId.data;
-        // _validTriggers[dataWithId.triggerId] = true;
+        _signatures[dataWithId.chequeId] = _signature;
+        // We decode the data to get a 'cheque' because it was encoded by the trigger
+        ICheque.Cheque memory _cheque = abi.decode(
+            dataWithId.data,
+            (ICheque.Cheque)
+        );
+        // depositCheque(_cheque.sender, _cheque.receiver, _cheque.amount, _cheque.note, true);
+        _signatures[dataWithId.chequeId] = _signature;
     }
 
     // Function for the owner to pay a cheque
