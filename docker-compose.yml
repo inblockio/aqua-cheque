@@ -7,23 +7,23 @@
 ###################################
 
 services:
-  anvil:
-    image: "ghcr.io/foundry-rs/foundry:stable"
-    platform: linux/amd64
-    container_name: "anvil"
-    network_mode: "host"
-    ports:
-      - "8545:8545"
-    environment:
-      ANVIL_IP_ADDR: 0.0.0.0
-    command: ["anvil", "--no-cors"]
+  # anvil:
+  #   image: "ghcr.io/foundry-rs/foundry:stable"
+  #   platform: linux/amd64
+  #   container_name: "anvil"
+  #   network_mode: "host"
+  #   ports:
+  #     - "8545:8545"
+  #   environment:
+  #     ANVIL_IP_ADDR: 0.0.0.0
+  #   command: ["anvil", "--no-cors"]
 
   # The main instance all WAVS interaction will happen from
   wavs:
     image: "ghcr.io/lay3rlabs/wavs:0.3.0"
     container_name: "wavs"
     stop_signal: SIGKILL
-    depends_on: ["anvil"]
+    # depends_on: ["anvil"]
     network_mode: "host"
     env_file: "./.env"
     ports:
@@ -53,7 +53,7 @@ services:
   deploy-eigenlayer:
     image: "ghcr.io/lay3rlabs/wavs:0.3.0"
     container_name: "wavs-deploy-eigenlayer"
-    depends_on: ["wavs", "aggregator", "anvil"] #] # "anvil",
+    depends_on: ["wavs", "aggregator"] # "anvil",
     restart: "no"
     env_file: "./.env"
     command: ["wavs-cli", "deploy-eigen-core"]
