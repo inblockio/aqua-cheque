@@ -36,7 +36,7 @@ impl Guest for Component {
 }
 
 async fn get_price_feed(id: u64) -> Result<PriceFeedData, String> {
-    let url = format!(
+    let url: String = format!(
         "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id={}&range=1h",
         id
     );

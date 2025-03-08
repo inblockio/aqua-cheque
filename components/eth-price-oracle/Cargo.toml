@@ -15,6 +15,7 @@ alloy-sol-macro = { workspace = true }
 wstd = { workspace = true }
 alloy-sol-types = { workspace = true }
 anyhow = { workspace = true }
+wasi-http = { workspace = true }  # Use the version from your workspace
 
 [lib]
 crate-type = ["cdylib"]
