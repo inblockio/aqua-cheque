@@ -1,11 +1,7 @@
-mod api_checks;
-mod models;
 mod trigger;
-use models::{AquaPayload, AquaTree, FileObject};
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
 use wavs_wasi_chain::http::{fetch_json, http_request_get};
 pub mod bindings;
-use crate::api_checks::verify_aqua_data;
 use crate::bindings::{export, Guest, TriggerAction};
 use serde::{Deserialize, Serialize};
 use wstd::{http::HeaderValue, runtime::block_on};
@@ -20,27 +16,14 @@ impl Guest for Component {
 
         // Convert bytes to string and parse first char as u64
         let input = std::str::from_utf8(&req).map_err(|e| e.to_string())?;
-        println!("====================================================");
-        println!("input data : {}", input);
+        println!("input id: {}", input);
 
-        // let id = input.chars().next().ok_or("Empty input")?;
-        // let id = id.to_digit(16).ok_or("Invalid hex digit")? as u64;
-
-        // Deserialize the input string to AquaTree structure
-        let aqua_tree = serde_json::from_str::<AquaTree>(input)
-            .map_err(|e| format!("Failed to parse AquaTree: {}", e))?;
-
-        // let aqua_tree_result: Result<AquaTree> = serde_json::from_str(input);
-        let payload: AquaPayload = AquaPayload { fileObjects: Vec::new(), aquaTree: aqua_tree };
+        let id = input.chars().next().ok_or("Empty input")?;
+        let id = id.to_digit(16).ok_or("Invalid hex digit")? as u64;
 
         let res = block_on(async move {
-            let resp_data = verify_aqua_data(
-                "http://164.92.183.228:3600/file/object/".to_string().as_str(),
-                &payload,
-            )
-            .await?;
-            println!("====================================================");
-            println!("API resp_data: {:?}", resp_data);
+            let resp_data = get_price_feed(id).await?;
+            println!("resp_data: {:?}", resp_data);
             serde_json::to_vec(&resp_data).map_err(|e| e.to_string())
         })?;
 
@@ -53,7 +36,7 @@ impl Guest for Component {
 }
 
 async fn get_price_feed(id: u64) -> Result<PriceFeedData, String> {
-    let url: String = format!(
+    let url = format!(
         "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id={}&range=1h",
         id
     );
