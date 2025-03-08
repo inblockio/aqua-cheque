@@ -11,7 +11,7 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<Vec<u8>>, String> {
-        let (trigger_id, req, dest) =
+        let (cheque_id, req, dest) =
             decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
         // Convert bytes to string and parse first char as u64
@@ -28,45 +28,50 @@ impl Guest for Component {
         })?;
 
         let output = match dest {
-            Destination::Ethereum => Some(encode_trigger_output(trigger_id, &res)),
+            Destination::Ethereum => Some(encode_trigger_output(cheque_id, &res)),
             Destination::CliOutput => Some(res),
         };
         Ok(output)
     }
 }
 
-async fn get_price_feed(id: u64) -> Result<PriceFeedData, String> {
-    let url = format!(
-        "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id={}&range=1h",
-        id
-    );
+async fn get_price_feed(_id: u64) -> Result<Cheque, String> {
+    // let url = format!(
+    //     "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id={}&range=1h",
+    //     id
+    // );
 
-    let current_time = std::time::SystemTime::now().elapsed().unwrap().as_secs();
+    // let current_time = std::time::SystemTime::now().elapsed().unwrap().as_secs();
 
-    let mut req = http_request_get(&url).map_err(|e| e.to_string())?;
-    req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
-    req.headers_mut().insert("Content-Type", HeaderValue::from_static("application/json"));
-    req.headers_mut()
-        .insert("User-Agent", HeaderValue::from_static("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"));
-    req.headers_mut().insert(
-        "Cookie",
-        HeaderValue::from_str(&format!("myrandom_cookie={}", current_time)).unwrap(),
-    );
+    // let mut req = http_request_get(&url).map_err(|e| e.to_string())?;
+    // req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
+    // req.headers_mut().insert("Content-Type", HeaderValue::from_static("application/json"));
+    // req.headers_mut()
+    //     .insert("User-Agent", HeaderValue::from_static("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"));
+    // req.headers_mut().insert(
+    //     "Cookie",
+    //     HeaderValue::from_str(&format!("myrandom_cookie={}", current_time)).unwrap(),
+    // );
 
-    let json: Root = fetch_json(req).await.map_err(|e| e.to_string())?;
+    // let json: Root = fetch_json(req).await.map_err(|e| e.to_string())?;
 
-    Ok(PriceFeedData {
-        symbol: json.data.symbol,
-        price: json.data.statistics.price,
-        timestamp: json.status.timestamp,
+    Ok(Cheque {
+        sender: "0x...".to_string(),
+        receiver: "0x...".to_string(),
+        amount: 1,
+        note: "First Test".to_string(),
+        is_paid: false,
     })
 }
 
+// #[derive(Debug, Clone, PartialEq, Eq)]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct PriceFeedData {
-    symbol: String,
-    timestamp: String,
-    price: f64,
+pub struct Cheque {
+    pub sender: String, // Ethereum addresses are usually represented as strings in Rust
+    pub receiver: String,
+    pub amount: u64, // Use u64 for uint256, or use `ethers::types::U256` for precise Ethereum compatibility
+    pub note: String,
+    pub is_paid: bool,
 }
 
 /// -----

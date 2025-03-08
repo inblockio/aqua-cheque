@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.22;
 
-import {SimpleTrigger} from "contracts/WavsTrigger.sol";
-import {SimpleSubmit} from "contracts/WavsSubmit.sol";
-import {ITypes} from "interfaces/ITypes.sol";
+import {ChequeTrigger} from "contracts/ChequeWavsTrigger.sol";
+import {ChequeContract} from "contracts/Cheque.sol";
+import {ICheque} from "interfaces/ICheque.sol";
 import {Common} from "script/Common.s.sol";
 import {console} from "forge-std/console.sol";
 
@@ -11,13 +11,13 @@ import {console} from "forge-std/console.sol";
 contract ShowResult is Common {
     function run(string calldata serviceTriggerAddr, string calldata serviceHandlerAddr) public {
         vm.startBroadcast(_privateKey);
-        SimpleTrigger trigger = SimpleTrigger(vm.parseAddress(serviceTriggerAddr));
-        SimpleSubmit submit = SimpleSubmit(vm.parseAddress(serviceHandlerAddr));
+        ChequeTrigger trigger = ChequeTrigger(vm.parseAddress(serviceTriggerAddr));
+        ChequeContract submit = ChequeContract(vm.parseAddress(serviceHandlerAddr));
 
-        ITypes.TriggerId triggerId = trigger.nextTriggerId();
-        console.log("Fetching data for TriggerId", ITypes.TriggerId.unwrap(triggerId));
+        ICheque.ChequeId triggerId = trigger.nextChequeId();
+        console.log("Fetching data for cheque TriggerId", ICheque.ChequeId.unwrap(triggerId));
 
-        bytes memory data = submit.getData(triggerId);
+        bytes memory data = submit.getCheque(triggerId);
         console.log("Data:", string(data));
 
         vm.stopBroadcast();

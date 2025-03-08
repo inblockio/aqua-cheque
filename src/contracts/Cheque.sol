@@ -16,7 +16,8 @@ contract ChequeContract is IWavsServiceHandler {
         public chequesById;
 
     /// @notice Mapping of trigger signatures
-    mapping(ICheque.ChequeId _chequeId => bytes _signature) internal _signatures;
+    mapping(ICheque.ChequeId _chequeId => bytes _signature)
+        internal _signatures;
 
     mapping(uint256 => ICheque.Cheque) public cheques;
     uint256 public chequeCounter;
@@ -53,12 +54,9 @@ contract ChequeContract is IWavsServiceHandler {
         });
 
         cheques[chequeCounter] = _cheque;
-        
+
         ICheque.ChequeId counter = ICheque.ChequeId.wrap(chequeCounter);
-        emit ICheque.ChequeDeposited(
-            counter,
-            abi.encode(_cheque)
-        );
+        emit ICheque.ChequeDeposited(counter, abi.encode(_cheque));
         chequeCounter++;
     }
 
@@ -67,7 +65,6 @@ contract ChequeContract is IWavsServiceHandler {
         bytes calldata _data,
         bytes calldata _signature
     ) external {
-
         _serviceManager.validate(_data, _signature);
 
         ICheque.DataWithId memory dataWithId = abi.decode(
@@ -95,6 +92,16 @@ contract ChequeContract is IWavsServiceHandler {
         payable(cheque.receiver).transfer(cheque.amount);
 
         emit ICheque.ChequePaid(_chequeId, cheque.receiver, cheque.amount);
+    }
+
+    function getCheque(
+        ICheque.ChequeId chequeId
+    ) external view returns (ICheque.ChequeInfo memory _chequeInfo) {
+        ICheque.Cheque storage _cheque = chequesById[chequeId];
+        _chequeInfo = ICheque.ChequeInfo({
+            chequeId: chequeId,
+            data: abi.encode(_cheque)
+        });
     }
 
     // Function to get contract balance

@@ -4,11 +4,11 @@ pragma solidity 0.8.22;
 import {stdJson} from "forge-std/StdJson.sol";
 import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
-import {SimpleSubmit} from "contracts/WavsSubmit.sol";
-import {SimpleTrigger} from "contracts/WavsTrigger.sol";
+import {ChequeContract} from "contracts/Cheque.sol";
+import {ChequeTrigger} from "contracts/ChequeWavsTrigger.sol";
 import {Common, EigenContracts} from "script/Common.s.sol";
 
-/// @dev Deployment script for SimpleSubmit and SimpleTrigger contracts
+/// @dev Deployment script for SimpleSubmit and ChequeTrigger contracts
 contract Deploy is Common {
     using stdJson for string;
 
@@ -17,13 +17,13 @@ contract Deploy is Common {
     string public script_output_path = string.concat(root, "/.docker/script_deploy.json");
 
     /**
-     * @dev Deploys the SimpleSubmit and SimpleTrigger contracts and writes the results to a JSON file
+     * @dev Deploys the ChequeContract and ChequeTrigger contracts and writes the results to a JSON file
      * @param _serviceManagerAddr The address of the service manager
      */
     function run(string calldata _serviceManagerAddr) public {
         vm.startBroadcast(_privateKey);
-        SimpleSubmit _submit = new SimpleSubmit(IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)));
-        SimpleTrigger _trigger = new SimpleTrigger();
+        ChequeContract _submit = new ChequeContract(IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)));
+        ChequeTrigger _trigger = new ChequeTrigger();
         vm.stopBroadcast();
 
         string memory _json = "json";
