@@ -2,7 +2,7 @@
 
 **Template for getting started with developing WAVS applications**
 
-A template for developing WebAssembly AVS applications using Rust and Solidity, configured for Windows *WSL*, Linux, and MacOS. The sample oracle service fetches the current price of a cryptocurrency from [CoinMarketCap](https://coinmarketcap.com) and saves it on chain.
+A template for developing WebAssembly AVS applications using Rust and Solidity, configured for Windows *WSL*, Linux, and MacOS. The sample oracle service fetches the current price of a cryptocurrency from [**CoinMarketCap**](https://coinmarketcap.com) and saves it on chain.
 
 ## System Requirements
 

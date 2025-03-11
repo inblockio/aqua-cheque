@@ -8,7 +8,7 @@ default: build
 
 # Customize these variables
 COMPONENT_FILENAME=aqua_cheque.wasm
-TRIGGER_EVENT="NewTrigger(bytes)"
+TRIGGER_EVENT="ChequeDeposited(uint256 chequeId,bytes  data)"
 SERVICE_CONFIG='{"fuel_limit":100000000,"max_gas":5000000,"host_envs":[],"kv":[],"workflow_id":"default","component_id":"default"}'
 
 # Define common variables
