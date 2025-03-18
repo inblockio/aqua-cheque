@@ -168,7 +168,7 @@ forge script ./script/Deploy.s.sol ${SERVICE_MANAGER_ADDR} --sig "run(string)" -
 Deploy the compiled component with the contracts from the previous steps. Review the [makefile](./Makefile) for more details and configuration options.`TRIGGER_EVENT` is the event that the trigger contract emits and WAVS watches for. By altering `SERVICE_TRIGGER_ADDR` you can watch events for contracts others have deployed.
 
 ```bash
-TRIGGER_EVENT="NewTrigger(bytes)" make deploy-service
+TRIGGER_EVENT="ChequeDeposited(uint256 ,bytes)" make deploy-service
 ```
 
 ## Trigger the Service
@@ -188,4 +188,10 @@ Query the latest submission contract id from the previous request made.
 ```bash
 # Get the latest TriggerId and show the result via `script/ShowResult.s.sol`
 make show-result
+```
+
+## Direct cast call
+
+```bash
+cast call "0x36c02da8a0983159322a80ffe9f24b1acff8b570" "getChequeData(uint256)" 1
 ```

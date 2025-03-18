@@ -11,13 +11,13 @@ interface ICheque {
     }
 
     struct Cheque {
-        address sender;
-        address receiver;
+        string sender;
+        string receiver;
         uint256 amount;
         string note;
         bool isPaid;
-        bytes aquaTree;
-        bytes formContent;
+        string aquaTree;
+        string formContent;
     }
 
     struct ChequeInfo {

@@ -19,7 +19,11 @@ contract ChequeContract is IWavsServiceHandler {
     mapping(ICheque.ChequeId _chequeId => bytes _signature)
         internal _signatures;
 
+    mapping(ICheque.ChequeId _chequeId => bytes _chequeData)
+        internal _chequesData;
+
     mapping(uint256 => ICheque.Cheque) public cheques;
+
     uint256 public chequeCounter;
 
     modifier onlyOwner() {
@@ -38,13 +42,13 @@ contract ChequeContract is IWavsServiceHandler {
 
     // Function to deposit a cheque
     function depositCheque(
-        address sender,
-        address _receiver,
-        string memory _note,
+        string memory sender,
+        string memory _receiver,
         uint256 amount,
+        string memory _note,
         bool isPaid,
-        bytes memory aquaTree,
-        bytes memory formContent
+        string memory aquaTree,
+        string memory formContent
     ) external {
         // require(msg.value > 0, "Cheque amount must be greater than zero");
         ICheque.Cheque memory _cheque = ICheque.Cheque({
@@ -57,11 +61,10 @@ contract ChequeContract is IWavsServiceHandler {
             formContent: formContent
         });
 
-        cheques[chequeCounter] = _cheque;
-
-        ICheque.ChequeId counter = ICheque.ChequeId.wrap(chequeCounter);
-        emit ICheque.ChequeDeposited(counter, abi.encode(_cheque));
         chequeCounter++;
+        cheques[chequeCounter] = _cheque;
+        // ICheque.ChequeId counter = ICheque.ChequeId.wrap(chequeCounter);
+        // emit ICheque.ChequeDeposited(counter, abi.encode(_cheque));
     }
 
     /// @inheritdoc IWavsServiceHandler
@@ -69,7 +72,7 @@ contract ChequeContract is IWavsServiceHandler {
         bytes calldata _data,
         bytes calldata _signature
     ) external {
-        _serviceManager.validate(_data, _signature);
+        // _serviceManager.validate(_data, _signature);
 
         ICheque.DataWithId memory dataWithId = abi.decode(
             _data,
@@ -77,26 +80,30 @@ contract ChequeContract is IWavsServiceHandler {
         );
 
         _signatures[dataWithId.chequeId] = _signature;
+        _chequesData[dataWithId.chequeId] = dataWithId.data;
+        // chequeCounter++;
         // We decode the data to get a 'cheque' because it was encoded by the trigger
         ICheque.Cheque memory _cheque = abi.decode(
             dataWithId.data,
             (ICheque.Cheque)
         );
-        this.depositCheque(_cheque.sender, _cheque.receiver, _cheque.note,  _cheque.amount, false, _cheque.aquaTree, _cheque.formContent);
-        _signatures[dataWithId.chequeId] = _signature;
+        chequeCounter++;
+        cheques[chequeCounter] = _cheque;
+        // depositCheque(_cheque.sender, _cheque.receiver, _cheque.amount, _cheque.note, _cheque.isPaid, _cheque.aquaTree, _cheque.formContent);
+        // _signatures[dataWithId.chequeId] = _signature;
     }
 
     // Function for the owner to pay a cheque
-    function payCheque(uint256 _chequeId) external onlyOwner {
-        ICheque.Cheque storage cheque = cheques[_chequeId];
-        require(!cheque.isPaid, "Cheque already paid");
-        require(address(this).balance >= cheque.amount, "Insufficient balance");
+    // function payCheque(uint256 _chequeId) external onlyOwner {
+    //     ICheque.Cheque storage cheque = cheques[_chequeId];
+    //     require(!cheque.isPaid, "Cheque already paid");
+    //     require(address(this).balance >= cheque.amount, "Insufficient balance");
 
-        cheque.isPaid = true;
-        payable(cheque.receiver).transfer(cheque.amount);
+    //     cheque.isPaid = true;
+    //     payable(cheque.receiver).transfer(cheque.amount);
 
-        emit ICheque.ChequePaid(_chequeId, cheque.receiver, cheque.amount);
-    }
+    //     emit ICheque.ChequePaid(_chequeId, cheque.receiver, cheque.amount);
+    // }
 
     function getCheque(
         ICheque.ChequeId chequeId
@@ -106,6 +113,24 @@ contract ChequeContract is IWavsServiceHandler {
             chequeId: chequeId,
             data: abi.encode(_cheque)
         });
+    }
+
+    function getSignature(
+        ICheque.ChequeId chequeId
+    ) external view returns (bytes memory _signature) {
+        bytes memory _sig = _signatures[chequeId];
+        return _sig;
+    }
+
+    function getChequeData(
+        ICheque.ChequeId chequeId
+    ) external view returns (bytes memory _signature) {
+        bytes memory _data = _chequesData[chequeId];
+        return _data;
+    }
+
+    function getChequesCount() external view returns (uint256) {
+        return chequeCounter;
     }
 
     // Function to get contract balance

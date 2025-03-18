@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.22;
+pragma solidity ^0.8.22;
 
 import {ICheque} from "interfaces/ICheque.sol";
 
@@ -12,12 +12,12 @@ contract ChequeTrigger {
 
     // @inheritdoc ISimpleTrigger
     function addTrigger(
-        address sender,
-        address receiver,
+        string memory sender,
+        string memory receiver,
         uint256 amount,
         string memory note,
-        bytes memory aquaTree,
-        bytes memory formContent
+        string memory aquaTree,
+        string memory formContent
     ) external {
         // Get the next trigger id
         nextChequeId = ICheque.ChequeId.wrap(

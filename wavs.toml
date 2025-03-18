@@ -5,7 +5,7 @@
 # e.g. WAVS_LOG_LEVEL="info, wavs=debug" or WAVS_CORS_ALLOWED_ORIGINS="https://example.com, https://example2.com"
 
 # the port on which the server will listen. Default is 8000
-# port = 9000
+# port = 9010
 
 # The log level, in the format of tracing directives. Default is ["info"]
 # See https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html#directives for more information

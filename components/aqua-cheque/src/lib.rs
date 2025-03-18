@@ -1,12 +1,11 @@
 mod trigger;
-use api_check::verify_aqua_data;
-use models::{AquaPayload, AquaTree};
 use trigger::{decode_trigger_event, encode_trigger_output, Destination};
-use wavs_wasi_chain::http::{fetch_json, http_request_get};
+use wavs_wasi_chain::ethereum::alloy_primitives::U256;
 pub mod bindings;
 use crate::bindings::{export, Guest, TriggerAction};
+use alloy_sol_types::SolValue;
 use serde::{Deserialize, Serialize};
-use wstd::{http::HeaderValue, runtime::block_on};
+use wstd::runtime::block_on;
 
 pub mod api_check;
 pub mod models;
@@ -19,126 +18,65 @@ impl Guest for Component {
         let (trigger_id, req, dest) =
             decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
-        // Convert bytes to string and parse first char as u64
-        let input = std::str::from_utf8(&req).map_err(|e| e.to_string())?;
-        println!("====================================================");
-        println!("input data : {}", input);
+        // let res = block_on(async move {
+        //     let cheque = get_price_feed(1).await?;
+        //     cheque
+        // })?;
 
-        // let id = input.chars().next().ok_or("Empty input")?;
-        // let id = id.to_digit(16).ok_or("Invalid hex digit")? as u64;
+        let res = block_on(async { get_price_feed(1).await })?;
 
-        // Deserialize the input string to AquaTree structure
-        let payload = serde_json::from_str::<AquaPayload>(input)
-            .map_err(|e| format!("Failed to parse AquaTree: {}", e))?;
-
-        // let aqua_tree_result: Result<AquaTree> = serde_json::from_str(input);
-        // let payload: AquaPayload = AquaPayload { fileObjects: Vec::new(), aquaTree: aqua_tree };
-
-        let res = block_on(async move {
-            let resp_data = verify_aqua_data(
-                "http://164.92.183.228:3600/file/object/".to_string().as_str(),
-                &payload,
-            )
-            .await?;
-            println!("====================================================");
-            println!("API resp_data: {:?}", resp_data);
-            serde_json::to_vec(&resp_data).map_err(|e| e.to_string())
-        })?;
-
+        println!("We are heading forward");
         let output = match dest {
-            Destination::Ethereum => Some(encode_trigger_output(trigger_id, &res)),
-            Destination::CliOutput => Some(res),
+            Destination::Ethereum => {
+                // Convert CCheque to solidity::ICheque::Cheque
+                let solidity_cheque = solidity::ICheque::Cheque {
+                    sender: res.sender,
+                    receiver: res.receiver,
+                    amount: U256::from(res.amount),
+                    note: res.note,
+                    isPaid: res.isPaid,
+                    aquaTree: res.aquaTree,
+                    formContent: res.formContent,
+                };
+                let encoded_cheque = solidity::ICheque::Cheque::abi_encode(&solidity_cheque);
+                Some(encode_trigger_output(trigger_id, solidity_cheque.abi_encode()))
+            }
+            Destination::CliOutput => serde_json::to_vec(&res).map_err(|e| e.to_string()).ok(),
         };
+        println!("We are about to send the trigger");
         Ok(output)
     }
 }
 
-async fn get_price_feed(_id: u64) -> Result<Cheque, String> {
-    // let url = format!(
-    //     "https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id={}&range=1h",
-    //     id
-    // );
-
-    // let current_time = std::time::SystemTime::now().elapsed().unwrap().as_secs();
-
-    // let mut req = http_request_get(&url).map_err(|e| e.to_string())?;
-    // req.headers_mut().insert("Accept", HeaderValue::from_static("application/json"));
-    // req.headers_mut().insert("Content-Type", HeaderValue::from_static("application/json"));
-    // req.headers_mut()
-    //     .insert("User-Agent", HeaderValue::from_static("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36"));
-    // req.headers_mut().insert(
-    //     "Cookie",
-    //     HeaderValue::from_str(&format!("myrandom_cookie={}", current_time)).unwrap(),
-    // );
-
-    // let json: Root = fetch_json(req).await.map_err(|e| e.to_string())?;
-
-    Ok(Cheque {
-        sender: "0x...".to_string(),
-        receiver: "0x...".to_string(),
+async fn get_price_feed(_id: u64) -> Result<CCheque, String> {
+    Ok(CCheque {
+        sender: "0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7".to_string(),
+        receiver: "0x2EDf2536e4Df3f6e1BFd94054c3E91baf34E10d8".to_string(),
         amount: 10,
         note: "First Test".to_string(),
-        is_paid: false,
+        isPaid: false,
+        aquaTree: "{}".to_string(),
+        formContent: "{}".to_string(),
     })
-    // Err("Hi there, we deciced to fail".to_string())
 }
 
-// #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(non_snake_case)]
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Cheque {
-    pub sender: String, // Ethereum addresses are usually represented as strings in Rust
+pub struct CCheque {
+    pub sender: String,
     pub receiver: String,
-    pub amount: u64, // Use u64 for uint256, or use `ethers::types::U256` for precise Ethereum compatibility
+    pub amount: u64,
     pub note: String,
-    pub is_paid: bool,
+    pub isPaid: bool,
+    pub aquaTree: String,
+    pub formContent: String,
 }
 
-/// -----
-/// <https://transform.tools/json-to-rust-serde>
-/// Generated from <https://api.coinmarketcap.com/data-api/v3/cryptocurrency/detail?id=1&range=1h>
-/// -----
-///
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Root {
-    pub data: Data,
-    pub status: Status,
-}
+// ... (rest of your code, including Root, Data, Statistics, etc.)
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Data {
-    pub id: f64,
-    pub name: String,
-    pub symbol: String,
-    pub statistics: Statistics,
-    pub description: String,
-    pub category: String,
-    pub slug: String,
-}
+mod solidity {
+    use alloy_sol_macro::sol;
+    pub use ICheque::*;
 
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Statistics {
-    pub price: f64,
-    #[serde(rename = "totalSupply")]
-    pub total_supply: f64,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct CoinBitesVideo {
-    pub id: String,
-    pub category: String,
-    #[serde(rename = "videoUrl")]
-    pub video_url: String,
-    pub title: String,
-    pub description: String,
-    #[serde(rename = "previewImage")]
-    pub preview_image: String,
-}
-
-#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct Status {
-    pub timestamp: String,
-    pub error_code: String,
-    pub error_message: String,
-    pub elapsed: String,
-    pub credit_count: f64,
+    sol!("../../src/interfaces/ICheque.sol");
 }
