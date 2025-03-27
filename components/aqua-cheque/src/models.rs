@@ -9,7 +9,7 @@ pub struct FileObject {
 }
 
 // Define the revision structure
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Revision {
     pub previous_verification_hash: String,
     pub local_timestamp: String,
@@ -20,21 +20,21 @@ pub struct Revision {
 }
 
 // Define the tree structure
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Tree {
     pub hash: String,
     pub children: Vec<String>,
 }
 
 // Define the paths structure
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TreeMapping {
     pub paths: std::collections::HashMap<String, Vec<String>>,
     pub latestHash: String,
 }
 
 // Define the aqua tree structure
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AquaTree {
     pub revisions: std::collections::HashMap<String, Revision>,
     pub file_index: std::collections::HashMap<String, String>,
@@ -49,19 +49,19 @@ pub struct AquaPayload {
     pub aquaTree: AquaTree,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct ApiResponse {
     pub data: ApiResponseData,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct ApiResponseData {
     pub aquaTree: AquaTree,
     pub aquaTrees: Vec<AquaTree>, // Empty array in your example
     pub logData: Vec<LogData>,
 }
 
-#[derive(Deserialize, Debug, Serialize)]
+#[derive(Deserialize, Debug, Serialize, Clone)]
 pub struct LogData {
     pub logType: String,
     pub log: String,
