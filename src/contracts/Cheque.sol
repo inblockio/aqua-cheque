@@ -7,6 +7,9 @@ import {ICheque} from "interfaces/ICheque.sol";
 
 contract ChequeContract is IWavsServiceHandler {
     address public owner;
+    
+    /// @notice Authorized accounts that can register cheques
+    mapping(address => bool) public authorizedRegistrars;
 
     /// @notice Service manager instance
     IWavsServiceManager private _serviceManager;
@@ -26,53 +29,92 @@ contract ChequeContract is IWavsServiceHandler {
 
     uint256 public chequeCounter;
 
+    // Status tracking for verification results
+    mapping(uint256 => bool) public verifiedCheques;
+
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner can perform this action");
         _;
     }
 
-    // constructor(address _owner) {
-    //     require(_owner != address(0), "Owner cannot be zero address");
-    //     owner = _owner;
-    // }
+    modifier onlyAuthorized() {
+        require(authorizedRegistrars[msg.sender] || msg.sender == owner, "Not authorized to register cheques");
+        _;
+    }
 
     constructor(IWavsServiceManager serviceManager) {
         _serviceManager = serviceManager;
+        owner = msg.sender;
+        // Auto-authorize the deployer
+        authorizedRegistrars[msg.sender] = true;
     }
 
-    // Function to deposit a cheque
+    /**
+     * @notice Add an authorized account that can register cheques
+     * @param _account Address to authorize
+     */
+    function addAuthorizedRegistrar(address _account) external onlyOwner {
+        authorizedRegistrars[_account] = true;
+    }
+
+    /**
+     * @notice Remove an authorized account
+     * @param _account Address to remove authorization from
+     */
+    function removeAuthorizedRegistrar(address _account) external onlyOwner {
+        require(_account != owner, "Cannot remove owner");
+        authorizedRegistrars[_account] = false;
+    }
+
+    /**
+     * @notice Function to deposit a cheque - Trigger 1: Registration
+     * @param sender The sender's identifier
+     * @param _receiver The receiver's identifier
+     * @param amount The amount of the cheque
+     * @param _note Additional note for the cheque
+     * @param aquaTree The Aqua tree hash
+     * @param formContent The form content hash
+     */
     function depositCheque(
         string memory sender,
         string memory _receiver,
         uint256 amount,
         string memory _note,
-        bool isPaid,
         string memory aquaTree,
         string memory formContent
-    ) external {
-        // require(msg.value > 0, "Cheque amount must be greater than zero");
+    ) external onlyAuthorized {
         ICheque.Cheque memory _cheque = ICheque.Cheque({
             sender: sender,
             receiver: _receiver,
             amount: amount,
             note: _note,
-            isPaid: isPaid,
+            isPaid: false,
             aquaTree: aquaTree,
             formContent: formContent
         });
 
         chequeCounter++;
         cheques[chequeCounter] = _cheque;
-        // ICheque.ChequeId counter = ICheque.ChequeId.wrap(chequeCounter);
-        // emit ICheque.ChequeDeposited(counter, abi.encode(_cheque));
+        
+        // Convert to ChequeId type
+        ICheque.ChequeId chequeId = ICheque.ChequeId.wrap(chequeCounter);
+        chequesById[chequeId] = _cheque;
+        
+        // Emit event for the registration trigger
+        emit ICheque.ChequeDeposited(chequeId, abi.encode(_cheque));
     }
 
-    /// @inheritdoc IWavsServiceHandler
+    /**
+     * @notice Handle signed data from WAVS - Trigger 2: Verification
+     * @param _data The cheque data 
+     * @param _signature The signature of the data
+     */
     function handleSignedData(
         bytes calldata _data,
         bytes calldata _signature
     ) external {
-        // _serviceManager.validate(_data, _signature);
+        // Validate the data and signature with service manager
+        _serviceManager.validate(_data, _signature);
 
         ICheque.DataWithId memory dataWithId = abi.decode(
             _data,
@@ -81,30 +123,63 @@ contract ChequeContract is IWavsServiceHandler {
 
         _signatures[dataWithId.chequeId] = _signature;
         _chequesData[dataWithId.chequeId] = dataWithId.data;
-        // chequeCounter++;
-        // We decode the data to get a 'cheque' because it was encoded by the trigger
+        
+        // Decode the cheque data
         ICheque.Cheque memory _cheque = abi.decode(
             dataWithId.data,
             (ICheque.Cheque)
         );
-        chequeCounter++;
-        cheques[chequeCounter] = _cheque;
-        // depositCheque(_cheque.sender, _cheque.receiver, _cheque.amount, _cheque.note, _cheque.isPaid, _cheque.aquaTree, _cheque.formContent);
-        // _signatures[dataWithId.chequeId] = _signature;
+        
+        // Get the uint value from ChequeId type
+        uint256 chequeIdValue = ICheque.ChequeId.unwrap(dataWithId.chequeId);
+        
+        // Mark as verified
+        verifiedCheques[chequeIdValue] = true;
+        
+        // Log verification result
+        emit VerificationResult(chequeIdValue, true);
     }
 
-    // Function for the owner to pay a cheque
-    // function payCheque(uint256 _chequeId) external onlyOwner {
-    //     ICheque.Cheque storage cheque = cheques[_chequeId];
-    //     require(!cheque.isPaid, "Cheque already paid");
-    //     require(address(this).balance >= cheque.amount, "Insufficient balance");
+    /**
+     * @notice Process payment for a verified cheque - Trigger 3: Payout
+     * @param _chequeId The ID of the cheque to pay
+     * @param recipientAddress The address to receive payment
+     */
+    function payCheque(uint256 _chequeId, address payable recipientAddress) external {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        
+        require(verifiedCheques[_chequeId], "Cheque not verified");
+        require(!cheque.isPaid, "Cheque already paid");
+        require(address(this).balance >= cheque.amount, "Insufficient balance");
 
-    //     cheque.isPaid = true;
-    //     payable(cheque.receiver).transfer(cheque.amount);
+        // Mark as paid
+        cheque.isPaid = true;
+        
+        // Transfer funds
+        recipientAddress.transfer(cheque.amount);
 
-    //     emit ICheque.ChequePaid(_chequeId, cheque.receiver, cheque.amount);
-    // }
+        // Emit payout event
+        emit ICheque.ChequePaid(_chequeId, recipientAddress, cheque.amount);
+    }
 
+    /**
+     * @notice Recall/cancel a cheque - Can only be done if not paid
+     * @param _chequeId The ID of the cheque to recall
+     */
+    function recallCheque(uint256 _chequeId) external onlyAuthorized {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        require(!cheque.isPaid, "Cannot recall paid cheque");
+        
+        // Mark as paid to prevent further use
+        cheque.isPaid = true;
+        
+        // Emit recall event
+        emit ChequeRecalled(_chequeId);
+    }
+
+    // View functions
     function getCheque(
         ICheque.ChequeId chequeId
     ) external view returns (ICheque.ChequeInfo memory _chequeInfo) {
@@ -124,28 +199,29 @@ contract ChequeContract is IWavsServiceHandler {
 
     function getChequeData(
         ICheque.ChequeId chequeId
-    ) external view returns (bytes memory _signature) {
-        bytes memory _data = _chequesData[chequeId];
+    ) external view returns (bytes memory _data) {
+        _data = _chequesData[chequeId];
         return _data;
+    }
+
+    function isVerified(uint256 _chequeId) external view returns (bool) {
+        return verifiedCheques[_chequeId];
     }
 
     function getChequesCount() external view returns (uint256) {
         return chequeCounter;
     }
 
-    // Function to get contract balance
     function getBalance() external view returns (uint256) {
         return address(this).balance;
     }
+
+    // Custom events
+    event VerificationResult(uint256 indexed chequeId, bool success);
+    event ChequeRecalled(uint256 indexed chequeId);
 
     // Function to allow anyone to send ETH directly to the contract
     receive() external payable {
         emit ICheque.FundsReceived(msg.sender, msg.value);
     }
-
-    // Fallback function (in case non-matching calls are made)
-    // Disabled this because its a global fallback payable function that cause chaos
-    // fallback() external payable {
-    //     emit ICheque.FundsReceived(msg.sender, msg.value);
-    // }
 }

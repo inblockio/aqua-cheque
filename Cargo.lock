@@ -2048,6 +2048,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 
 [[package]]
+name = "payout-cheque"
+version = "0.3.0"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-chain",
+ "wit-bindgen-rt 0.39.0",
+ "wstd",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3064,6 +3078,20 @@ name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
+
+[[package]]
+name = "verify-cheque"
+version = "0.3.0"
+dependencies = [
+ "alloy-sol-macro",
+ "alloy-sol-types",
+ "anyhow",
+ "serde",
+ "serde_json",
+ "wavs-wasi-chain",
+ "wit-bindgen-rt 0.39.0",
+ "wstd",
+]
 
 [[package]]
 name = "version_check"
