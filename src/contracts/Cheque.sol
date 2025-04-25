@@ -105,6 +105,34 @@ contract ChequeContract is IWavsServiceHandler {
     }
 
     /**
+     * @notice Update the receiver of an existing cheque
+     * @param _chequeId The ID of the cheque to update
+     * @param _receiver The new receiver's identifier
+     */
+    function updateChequeReceiver(
+        uint256 _chequeId,
+        string memory _receiver
+    ) external onlyAuthorized {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        
+        // Get the cheque
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        
+        // Ensure the cheque is not paid yet
+        require(!cheque.isPaid, "Cannot update a paid cheque");
+        
+        // Update the receiver
+        cheque.receiver = _receiver;
+        
+        // Also update in the chequesById mapping
+        ICheque.ChequeId chequeId = ICheque.ChequeId.wrap(_chequeId);
+        chequesById[chequeId].receiver = _receiver;
+        
+        // Emit an event for the update
+        emit ChequeReceiverUpdated(_chequeId, _receiver);
+    }
+
+    /**
      * @notice Handle signed data from WAVS - Trigger 2: Verification
      * @param _data The cheque data 
      * @param _signature The signature of the data
@@ -219,6 +247,7 @@ contract ChequeContract is IWavsServiceHandler {
     // Custom events
     event VerificationResult(uint256 indexed chequeId, bool success);
     event ChequeRecalled(uint256 indexed chequeId);
+    event ChequeReceiverUpdated(uint256 indexed chequeId, string receiver);
 
     // Function to allow anyone to send ETH directly to the contract
     receive() external payable {

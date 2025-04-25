@@ -5,7 +5,7 @@ import Aquafier, {
     AquaTreeWrapper,
     CredentialsData,
 } from "aqua-js-sdk";
-import { ChequeData } from "./model"
+import { ChequeData } from "./model.js"
 import { ethers, hexlify, toUtf8Bytes } from 'ethers';
 import { TRIGGER_ABI, TRIGGER_CONTRACT_ADDRESS } from "./triggerAbi.js";
 import { dirname } from 'path';

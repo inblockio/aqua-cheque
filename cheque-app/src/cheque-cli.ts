@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { ethers } from 'ethers';
-import { ChequeManager } from './chequeManager';
+import { ChequeManager } from './chequeManager.js';
 
 // Command line arguments parser
 const args = process.argv.slice(2);
@@ -25,6 +25,7 @@ Available Commands:
   register-creator [privateKey] [creatorAddress]  - Register a new cheque creator
   remove-creator [privateKey] [creatorAddress]    - Remove a cheque creator
   deposit-cheque [privateKey] [options]           - Create a new cheque
+  update-receiver [privateKey] [chequeId] [receiver] - Update the receiver of a cheque
   verify-cheque [privateKey] [chequeId]           - Request verification for a cheque
   pay-cheque [privateKey] [chequeId] [recipient]  - Request payout for a cheque
   recall-cheque [privateKey] [chequeId]           - Recall/cancel a cheque
@@ -36,6 +37,7 @@ Available Commands:
 Examples:
   cheque-cli register-creator 0x123...abc 0x456...def
   cheque-cli deposit-cheque 0x123...abc --sender "Alice" --receiver "Bob" --amount 0.1 --note "Payment for services" --aqua "0x789...fed" --form "{}"
+  cheque-cli update-receiver 0x123...abc 1 "Charlie"
   cheque-cli verify-cheque 0x123...abc 1 0xabc...123 0xdef...456
   cheque-cli pay-cheque 0x123...abc 1 0x456...def
   `);
@@ -99,8 +101,8 @@ async function processCommand() {
           }
         }
 
-        // Validate required fields
-        const requiredFields = ['sender', 'receiver', 'amount', 'note', 'aqua', 'form'];
+        // Validate required fields (receiver is now optional)
+        const requiredFields = ['sender', 'amount', 'note', 'aqua', 'form'];
         const missing = requiredFields.filter(field => !options[field]);
         if (missing.length > 0) {
           console.error(`Error: Missing required fields: ${missing.join(', ')}`);
@@ -111,7 +113,7 @@ async function processCommand() {
         const amount = ethers.parseEther(options.amount);
         const tx = await chequeManager.depositCheque(
           options.sender,
-          options.receiver,
+          options.receiver || "", // Receiver is now optional
           amount,
           options.note,
           options.aqua,
@@ -121,6 +123,24 @@ async function processCommand() {
         console.log(`Transaction sent: ${tx.hash}`);
         await tx.wait();
         console.log('Cheque deposited successfully');
+        break;
+      }
+
+      case 'update-receiver': {
+        const privateKey = args[1];
+        const chequeId = parseInt(args[2]);
+        const receiver = args[3];
+
+        if (!privateKey || isNaN(chequeId) || !receiver) {
+          console.error('Error: Missing privateKey, chequeId, or receiver');
+          return;
+        }
+
+        chequeManager.connectWallet(privateKey);
+        const tx = await chequeManager.updateChequeReceiver(chequeId, receiver);
+        console.log(`Transaction sent: ${tx.hash}`);
+        await tx.wait();
+        console.log(`Cheque ${chequeId} receiver updated to ${receiver}`);
         break;
       }
 

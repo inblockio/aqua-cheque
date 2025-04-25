@@ -103,6 +103,26 @@ deploy-service:
 	--submit-address "${SERVICE_SUBMISSION_ADDR}" \
 	--service-config ${SERVICE_CONFIG}
 
+
+## deploy-service-payout: deploying the WAVS component service | COMPONENT_FILENAME, TRIGGER_EVENT, SERVICE_TRIGGER_ADDR, SERVICE_SUBMISSION_ADDR, SERVICE_CONFIG
+deploy-service-payout:
+	@$(WAVS_CMD) deploy-service --log-level=info --data /data/.docker --home /data \
+	--component "/data/compiled/payout_cheque.wasm" \
+	--trigger-event-name "PayoutRequested(uint256)" \
+	--trigger-address "${SERVICE_TRIGGER_ADDR}" \
+	--submit-address "${SERVICE_SUBMISSION_ADDR}" \
+	--service-config ${SERVICE_CONFIG}
+
+
+## deploy-service-payout: deploying the WAVS component service | COMPONENT_FILENAME, TRIGGER_EVENT, SERVICE_TRIGGER_ADDR, SERVICE_SUBMISSION_ADDR, SERVICE_CONFIG
+deploy-service-verification:
+	@$(WAVS_CMD) deploy-service --log-level=info --data /data/.docker --home /data \
+	--component "/data/compiled/verify_cheque.wasm" \
+	--trigger-event-name "VerificationRequested(uint256)" \
+	--trigger-address "${SERVICE_TRIGGER_ADDR}" \
+	--submit-address "${SERVICE_SUBMISSION_ADDR}" \
+	--service-config ${SERVICE_CONFIG}
+
 ## show-result: showing the result | SERVICE_TRIGGER_ADDR, SERVICE_SUBMISSION_ADDR, RPC_URL
 show-result:
 	@forge script ./script/ShowResult.s.sol ${SERVICE_TRIGGER_ADDR} ${SERVICE_SUBMISSION_ADDR} --sig "run(string,string)" --rpc-url $(RPC_URL) --broadcast -v 4

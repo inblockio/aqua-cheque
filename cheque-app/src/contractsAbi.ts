@@ -1,7 +1,7 @@
 // Contract addresses - replace with actual deployed addresses
 export const CHEQUE_CONTRACT_ADDRESS = "0x36c02da8a0983159322a80ffe9f24b1acff8b570";
-export const VERIFICATION_TRIGGER_ADDRESS = "0x0000000000000000000000000000000000000001"; // Replace with actual address
-export const PAYOUT_TRIGGER_ADDRESS = "0x0000000000000000000000000000000000000002"; // Replace with actual address
+export const VERIFICATION_TRIGGER_ADDRESS = "0xcd8a1c3ba11cf5ecfa6267617243239504a98d90"; // Replace with actual address
+export const PAYOUT_TRIGGER_ADDRESS = "0x82e01223d51eb87e16a03e24687edf0f294da6f1"; // Replace with actual address
 
 // ChequeContract ABI
 export const CHEQUE_ABI = [

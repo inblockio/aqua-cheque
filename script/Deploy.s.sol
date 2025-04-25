@@ -6,9 +6,13 @@ import {Strings} from "@openzeppelin-contracts/utils/Strings.sol";
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {ChequeContract} from "contracts/Cheque.sol";
 import {ChequeTrigger} from "contracts/ChequeWavsTrigger.sol";
+import {VerificationTrigger} from "contracts/VerificationTrigger.sol";
+import {PayoutTrigger} from "contracts/PayoutTrigger.sol";
 import {Common, EigenContracts} from "script/Common.s.sol";
+// solhint-disable-next-line no-console
+import {console} from "forge-std/console.sol";
 
-/// @dev Deployment script for SimpleSubmit and ChequeTrigger contracts
+/// @dev Deployment script for all contracts in the Aqua Cheque system
 contract Deploy is Common {
     using stdJson for string;
 
@@ -17,20 +21,45 @@ contract Deploy is Common {
     string public script_output_path = string.concat(root, "/.docker/script_deploy.json");
 
     /**
-     * @dev Deploys the ChequeContract and ChequeTrigger contracts and writes the results to a JSON file
+     * @dev Deploys all contracts and writes the results to a JSON file
      * @param _serviceManagerAddr The address of the service manager
      */
     function run(string calldata _serviceManagerAddr) public {
         vm.startBroadcast(_privateKey);
-        ChequeContract _submit = new ChequeContract(IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)));
-        ChequeTrigger _trigger = new ChequeTrigger();
+        
+        // Deploy main contract
+        ChequeContract chequeContract = new ChequeContract(IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)));
+        
+        // Deploy all trigger contracts
+        ChequeTrigger chequeTrigger = new ChequeTrigger();
+        VerificationTrigger verificationTrigger = new VerificationTrigger(
+            IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)),
+            address(chequeContract)
+        );
+        PayoutTrigger payoutTrigger = new PayoutTrigger(
+            IWavsServiceManager(vm.parseAddress(_serviceManagerAddr)),
+            address(chequeContract)
+        );
+        
         vm.stopBroadcast();
 
         string memory _json = "json";
-        _json.serialize("service_handler", Strings.toHexString(address(_submit)));
-        _json.serialize("trigger", Strings.toHexString(address(_trigger)));
+        _json.serialize("service_handler", Strings.toHexString(address(chequeContract)));
+        _json.serialize("cheque_trigger", Strings.toHexString(address(chequeTrigger)));
+        _json.serialize("verification_trigger", Strings.toHexString(address(verificationTrigger)));
+        _json.serialize("payout_trigger", Strings.toHexString(address(payoutTrigger)));
+        
+        // For backward compatibility
+        _json.serialize("trigger", Strings.toHexString(address(chequeTrigger)));
+        
         string memory _finalJson = _json.serialize("service_manager", _serviceManagerAddr);
         vm.writeFile(script_output_path, _finalJson);
+        
+        // solhint-disable-next-line no-console
+        console.log("ChequeContract deployed at:", address(chequeContract));
+        console.log("ChequeTrigger deployed at:", address(chequeTrigger));
+        console.log("VerificationTrigger deployed at:", address(verificationTrigger));
+        console.log("PayoutTrigger deployed at:", address(payoutTrigger));
     }
 
     /**
