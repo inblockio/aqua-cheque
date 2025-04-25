@@ -132,13 +132,13 @@ async fn verify_cheque_data(
 
     // Verify with the Aqua Protocol API
     println!("Sending for external verification...");
-    let verification_url = "https://api.aqua-protocol.org/verify";
+    let verification_url = "https://api.inblock.io/verify";
 
     match verify_aqua_data(verification_url, &payload).await {
         Ok(response) => {
             // Report the result
             api_client::report_verification_result(
-                "https://api.aqua-protocol.org/report",
+                "https://api.inblock.io/verify",
                 &req.request_id,
                 req.cheque_id,
                 response.success,
