@@ -26,10 +26,10 @@ impl Guest for Component {
 
         println!("📝 Processing ChequeDeposited event");
         println!("➡️ Trigger ID: {}", trigger_id);
-        
+
         // Get the CCheque object from processing
-        let cheque_result =
-            block_on(async { process_cheque_data(cheque_info).await }).map_err(|e| e.to_string())?;
+        let cheque_result = block_on(async { process_cheque_data(cheque_info).await })
+            .map_err(|e| e.to_string())?;
 
         println!("✅ Cheque processing completed successfully");
         println!("➡️ Sender: {}", cheque_result.sender);
@@ -70,7 +70,7 @@ async fn process_cheque_data(cheque_data: Vec<u8>) -> Result<CCheque, String> {
     // Here we'll process the raw binary data
     // For now, we'll call the existing get_price_feed function to simulate
     println!("Processing cheque data...");
-    
+
     // Use the existing function which we'll assume works with a cheque ID
     // In a real implementation, we'd parse cheque_data to get the ID
     let cheque_id = 1; // Default for testing

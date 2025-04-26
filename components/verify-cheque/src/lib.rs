@@ -33,9 +33,12 @@ impl Guest for Component {
         let verification_result =
             block_on(async { verify_cheque_data(&req).await }).map_err(|e| e.to_string())?;
 
-        println!("✅ Verification completed: {}", if verification_result.success { "SUCCESS" } else { "FAILED" });
+        println!(
+            "✅ Verification completed: {}",
+            if verification_result.success { "SUCCESS" } else { "FAILED" }
+        );
         println!("➡️ Message: {}", verification_result.message);
-        
+
         // Encode the result to be sent back to the blockchain
         let output = match dest {
             Destination::Ethereum => {

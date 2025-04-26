@@ -29,12 +29,15 @@ impl Guest for Component {
         println!("➡️ Recipient: {}", payout_req.recipient);
 
         // Process the payout request
-        let payout_result =
-            block_on(async { process_payout_request(&payout_req).await }).map_err(|e| e.to_string())?;
+        let payout_result = block_on(async { process_payout_request(&payout_req).await })
+            .map_err(|e| e.to_string())?;
 
-        println!("✅ Payout processing completed: {}", if payout_result.success { "SUCCESS" } else { "FAILED" });
+        println!(
+            "✅ Payout processing completed: {}",
+            if payout_result.success { "SUCCESS" } else { "FAILED" }
+        );
         println!("➡️ Message: {}", payout_result.message);
-        
+
         // Encode the result to be sent back to the blockchain
         let output = match dest {
             Destination::Ethereum => {
@@ -61,7 +64,7 @@ async fn process_payout_request(
 ) -> Result<models::PayoutResult, String> {
     use crate::models::PayoutResult;
     use crate::payout_service::{fetch_cheque_data, process_payout, verify_payout_request};
-    
+
     println!("Verifying cheque status before payout");
 
     // Fetch the cheque data from the blockchain
@@ -98,7 +101,10 @@ async fn process_payout_request(
                 cheque_id: req.cheque_id,
                 recipient: req.recipient.clone(),
                 success: true,
-                message: format!("Payout successful. Transaction hash: {}", tx_confirmation.tx_hash),
+                message: format!(
+                    "Payout successful. Transaction hash: {}",
+                    tx_confirmation.tx_hash
+                ),
                 amount: Some(cheque_data.amount),
             })
         }
