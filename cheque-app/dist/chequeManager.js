@@ -99,9 +99,9 @@ export class ChequeManager {
         return count.toNumber();
     }
     /**
-     * Create and deposit a new cheque
+     * Create and deposit a new cheque with or without a receiver
      * @param sender Sender identifier (address or name)
-     * @param receiver Receiver identifier (address or name)
+     * @param receiver Receiver identifier (address or name) - can be empty for blank cheques
      * @param amount Amount in wei
      * @param note Additional note for the cheque
      * @param aquaTree Aqua tree hash/data
@@ -116,7 +116,9 @@ export class ChequeManager {
         if (!isAuthorized) {
             throw new Error('Sender is not authorized to deposit cheques');
         }
-        const tx = await this.chequeContract.depositCheque(sender, receiver, amount, note, aquaTree, formContent);
+        // If receiver is not provided, use an empty string
+        const receiverValue = receiver || "";
+        const tx = await this.chequeContract.depositCheque(sender, receiverValue, amount, note, aquaTree, formContent);
         console.log(`Deposited cheque, tx: ${tx.hash}`);
         return tx;
     }
@@ -254,6 +256,29 @@ export class ChequeManager {
             value: amount
         });
         console.log(`Funded contract with ${ethers.formatEther(amount)} ETH, tx: ${tx.hash}`);
+        return tx;
+    }
+    /**
+     * Update the receiver of an existing cheque
+     * @param chequeId The ID of the cheque to update
+     * @param receiver The new receiver identifier (address or name)
+     */
+    async updateChequeReceiver(chequeId, receiver) {
+        if (!this.senderWallet) {
+            throw new Error('Wallet not connected');
+        }
+        // Check if sender is authorized
+        const isAuthorized = await this.isAuthorizedRegistrar(this.senderWallet.address);
+        if (!isAuthorized) {
+            throw new Error('Sender is not authorized to update cheques');
+        }
+        // Check if the cheque exists and is not paid yet
+        const cheque = await this.getChequeDetails(chequeId);
+        if (cheque.isPaid) {
+            throw new Error('Cannot update a paid cheque');
+        }
+        const tx = await this.chequeContract.updateChequeReceiver(chequeId, receiver);
+        console.log(`Updated receiver for cheque ${chequeId} to ${receiver}, tx: ${tx.hash}`);
         return tx;
     }
 }

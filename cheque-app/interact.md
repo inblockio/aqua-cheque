@@ -66,7 +66,7 @@ If not set, the application will default to `http://localhost:8545`.
 ## Using the CLI Tool
 
 The `cheque-cli` provides a command-line interface for interacting with the Aqua Cheque smart contracts.
-
+ 
 ### Available Commands
 
 #### Register a Cheque Creator
@@ -83,6 +83,12 @@ node dist/cheque-cli.js remove-creator <privateKey> <creatorAddress>
 ```bash
 node dist/cheque-cli.js deposit-cheque <privateKey> --sender "<sender>" --amount <amount> --note "<note>" --aqua "<aquaHash>" --form "{}" [--receiver "<receiver>"]
 ```
+
+#### Deposit a Cheque
+```bash
+node dist/cheque-cli.js deposit-cheque "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" --sender "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" --amount 10 --note "Some note" --aqua "<aquaHash>" --form "{}"
+```
+
 Note: The `--receiver` parameter is now optional. If omitted, an empty receiver will be used.
 
 #### Update a Cheque Receiver
