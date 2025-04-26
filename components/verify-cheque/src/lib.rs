@@ -14,35 +14,44 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<Vec<u8>>, String> {
-        println!("VerifyCheque component running...");
+        println!("==================================================");
+        println!("🟢 VERIFY-CHEQUE COMPONENT STARTED");
+        println!("==================================================");
+        println!("Received trigger action");
 
         // Decode the trigger event to get verification request details
         let (trigger_id, req, dest) =
             decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
-        println!("Processing verification request ID: {}", req.request_id);
-        println!("Cheque ID: {}", req.cheque_id);
+        println!("🔍 Processing verification request");
+        println!("➡️ Request ID: {}", req.request_id);
+        println!("➡️ Cheque ID: {}", req.cheque_id);
+        println!("➡️ Aqua Tree Hash: {}", req.aqua_tree_hash);
+        println!("➡️ Form Revision Hash: {}", req.form_revision_hash);
 
         // Process the verification request
         let verification_result =
             block_on(async { verify_cheque_data(&req).await }).map_err(|e| e.to_string())?;
 
+        println!("✅ Verification completed: {}", if verification_result.success { "SUCCESS" } else { "FAILED" });
+        println!("➡️ Message: {}", verification_result.message);
+        
         // Encode the result to be sent back to the blockchain
         let output = match dest {
             Destination::Ethereum => {
-                // Encode the verification result for the smart contract
+                println!("📡 Sending verification result back to Ethereum");
+                println!("➡️ Result: {}", verification_result.success);
                 Some(encode_trigger_output(trigger_id, verification_result.success))
             }
             Destination::CliOutput => {
-                // Output for CLI testing
+                println!("📟 Preparing CLI output");
                 serde_json::to_vec(&verification_result).map_err(|e| e.to_string()).ok()
             }
         };
 
-        println!(
-            "Verification completed: {}",
-            if verification_result.success { "SUCCESS" } else { "FAILED" }
-        );
+        println!("==================================================");
+        println!("🟢 VERIFY-CHEQUE COMPONENT FINISHED");
+        println!("==================================================");
         Ok(output)
     }
 }

@@ -15,37 +15,66 @@ export!(Component with_types_in bindings);
 
 impl Guest for Component {
     fn run(action: TriggerAction) -> std::result::Result<Option<Vec<u8>>, String> {
-        let (trigger_id, req, dest) =
+        println!("==================================================");
+        println!("🔵 AQUA-CHEQUE COMPONENT STARTED");
+        println!("==================================================");
+        println!("Received trigger action");
+
+        // Decode the trigger event to get cheque info
+        let (trigger_id, cheque_info, dest) =
             decode_trigger_event(action.data).map_err(|e| e.to_string())?;
 
-        // let res = block_on(async move {
-        //     let cheque = get_price_feed(1).await?;
-        //     cheque
-        // })?;
+        println!("📝 Processing ChequeDeposited event");
+        println!("➡️ Trigger ID: {}", trigger_id);
+        
+        // Get the CCheque object from processing
+        let cheque_result =
+            block_on(async { process_cheque_data(cheque_info).await }).map_err(|e| e.to_string())?;
 
-        let res = block_on(async { get_price_feed(1).await })?;
+        println!("✅ Cheque processing completed successfully");
+        println!("➡️ Sender: {}", cheque_result.sender);
+        println!("➡️ Receiver: {}", cheque_result.receiver);
+        println!("➡️ Amount: {}", cheque_result.amount);
 
-        println!("We are heading forward");
+        // Encode the result to be sent back to the blockchain
         let output = match dest {
             Destination::Ethereum => {
-                // Convert CCheque to solidity::ICheque::Cheque
+                println!("📡 Sending result back to Ethereum");
+                // Create the solidity representation
                 let solidity_cheque = solidity::ICheque::Cheque {
-                    sender: res.sender,
-                    receiver: res.receiver,
-                    amount: U256::from(res.amount),
-                    note: res.note,
-                    isPaid: res.isPaid,
-                    aquaTree: res.aquaTree,
-                    formContent: res.formContent,
+                    sender: cheque_result.sender,
+                    receiver: cheque_result.receiver,
+                    amount: U256::from(cheque_result.amount),
+                    note: cheque_result.note,
+                    isPaid: cheque_result.isPaid,
+                    aquaTree: cheque_result.aquaTree,
+                    formContent: cheque_result.formContent,
                 };
-                let encoded_cheque = solidity::ICheque::Cheque::abi_encode(&solidity_cheque);
                 Some(encode_trigger_output(trigger_id, solidity_cheque.abi_encode()))
             }
-            Destination::CliOutput => serde_json::to_vec(&res).map_err(|e| e.to_string()).ok(),
+            Destination::CliOutput => {
+                println!("📟 Preparing CLI output");
+                serde_json::to_vec(&cheque_result).map_err(|e| e.to_string()).ok()
+            }
         };
-        println!("We are about to send the trigger");
+
+        println!("==================================================");
+        println!("🔵 AQUA-CHEQUE COMPONENT FINISHED");
+        println!("==================================================");
         Ok(output)
     }
+}
+
+/// Process the cheque data from the trigger event
+async fn process_cheque_data(cheque_data: Vec<u8>) -> Result<CCheque, String> {
+    // Here we'll process the raw binary data
+    // For now, we'll call the existing get_price_feed function to simulate
+    println!("Processing cheque data...");
+    
+    // Use the existing function which we'll assume works with a cheque ID
+    // In a real implementation, we'd parse cheque_data to get the ID
+    let cheque_id = 1; // Default for testing
+    get_price_feed(cheque_id).await
 }
 
 async fn get_price_feed(cheque_id: u64) -> Result<CCheque, String> {
@@ -169,7 +198,12 @@ pub struct CCheque {
     pub formContent: String,
 }
 
-// ... (rest of your code, including Root, Data, Statistics, etc.)
+/// Results structure to be returned from component processing
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChequeResult {
+    pub cheque_id: u64,
+    pub result_hash: String,
+}
 
 mod solidity {
     use alloy_sol_macro::sol;
