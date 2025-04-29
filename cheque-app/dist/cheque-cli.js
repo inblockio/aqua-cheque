@@ -169,7 +169,11 @@ async function processCommand() {
                 }
                 const details = await chequeManager.getChequeDetails(chequeId);
                 console.log('Cheque Details:');
-                console.log(JSON.stringify(details, null, 2));
+                // console.log(JSON.stringify(details, null, 2));
+                console.log("Cheque Amount: ", details.amount);
+                console.log("Cheque Sender: ", details.sender);
+                console.log("Cheque Receiver: ", details.receiver);
+                console.log("Cheque Note: ", details.note);
                 break;
             }
             case 'is-authorized': {

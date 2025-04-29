@@ -1,104 +1,166 @@
 export const TRIGGER_CONTRACT_ADDRESS = "0x809d550fca64d94bd9f66e60752a544199cfac3d";
 export const TRIGGER_ABI = [
     {
-        "inputs": [],
-        "name": "nextTriggerId",
-        "outputs": [
-            {
-                "internalType": "ICheque.ChequeId",
-                "name": "",
-                "type": "uint256"
-            }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-    },
-    {
+        "type": "function",
+        "name": "addTrigger",
         "inputs": [
             {
-                "internalType": "ICheque.ChequeId",
-                "name": "chequeId",
-                "type": "uint256"
+                "name": "sender",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "receiver",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "note",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "aquaTree",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "formContent",
+                "type": "string",
+                "internalType": "string"
             }
         ],
-        "name": "getChequeInfo",
+        "outputs": [],
+        "stateMutability": "nonpayable"
+    },
+    {
+        "type": "function",
+        "name": "chequesById",
+        "inputs": [
+            {
+                "name": "_chequeId",
+                "type": "uint256",
+                "internalType": "ICheque.ChequeId"
+            }
+        ],
         "outputs": [
             {
+                "name": "sender",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "receiver",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "amount",
+                "type": "uint256",
+                "internalType": "uint256"
+            },
+            {
+                "name": "note",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "isPaid",
+                "type": "bool",
+                "internalType": "bool"
+            },
+            {
+                "name": "aquaTree",
+                "type": "string",
+                "internalType": "string"
+            },
+            {
+                "name": "formContent",
+                "type": "string",
+                "internalType": "string"
+            }
+        ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "function",
+        "name": "getChequeInfo",
+        "inputs": [
+            {
+                "name": "chequeId",
+                "type": "uint256",
+                "internalType": "ICheque.ChequeId"
+            }
+        ],
+        "outputs": [
+            {
+                "name": "_chequeInfo",
+                "type": "tuple",
+                "internalType": "struct ICheque.ChequeInfo",
                 "components": [
                     {
-                        "internalType": "ICheque.ChequeId",
                         "name": "chequeId",
-                        "type": "uint256"
+                        "type": "uint256",
+                        "internalType": "ICheque.ChequeId"
                     },
                     {
-                        "internalType": "bytes",
                         "name": "data",
-                        "type": "bytes"
+                        "type": "bytes",
+                        "internalType": "bytes"
                     }
-                ],
-                "internalType": "ICheque.ChequeInfo",
-                "name": "_chequeInfo",
-                "type": "tuple"
+                ]
             }
         ],
-        "stateMutability": "view",
-        "type": "function"
+        "stateMutability": "view"
     },
     {
-        "inputs": [
+        "type": "function",
+        "name": "nextChequeId",
+        "inputs": [],
+        "outputs": [
             {
-                "internalType": "address",
-                "name": "sender",
-                "type": "address"
-            },
-            {
-                "internalType": "address",
-                "name": "receiver",
-                "type": "address"
-            },
-            {
-                "internalType": "uint256",
-                "name": "amount",
-                "type": "uint256"
-            },
-            {
-                "internalType": "string",
-                "name": "note",
-                "type": "string"
-            },
-            {
-                "internalType": "bytes",
-                "name": "aquaTree",
-                "type": "bytes"
-            },
-            {
-                "internalType": "bytes",
-                "name": "formContent",
-                "type": "bytes"
+                "name": "",
+                "type": "uint256",
+                "internalType": "ICheque.ChequeId"
             }
         ],
-        "name": "addTrigger",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
+        "stateMutability": "view"
     },
     {
-        "anonymous": false,
-        "inputs": [
+        "type": "function",
+        "name": "nextTriggerId",
+        "inputs": [],
+        "outputs": [
             {
-                "indexed": false,
-                "internalType": "ICheque.ChequeId",
-                "name": "chequeId",
-                "type": "uint256"
-            },
-            {
-                "indexed": false,
-                "internalType": "bytes",
-                "name": "data",
-                "type": "bytes"
+                "name": "",
+                "type": "uint256",
+                "internalType": "ICheque.ChequeId"
             }
         ],
+        "stateMutability": "view"
+    },
+    {
+        "type": "event",
         "name": "ChequeDeposited",
-        "type": "event"
+        "inputs": [
+            {
+                "name": "chequeId",
+                "type": "uint256",
+                "indexed": false,
+                "internalType": "ICheque.ChequeId"
+            },
+            {
+                "name": "data",
+                "type": "bytes",
+                "indexed": false,
+                "internalType": "bytes"
+            }
+        ],
+        "anonymous": false
     }
 ];

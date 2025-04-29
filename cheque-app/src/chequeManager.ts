@@ -7,6 +7,7 @@ import {
   PAYOUT_TRIGGER_ADDRESS,
   PAYOUT_TRIGGER_ABI
 } from './contractsAbi.js';
+import { TRIGGER_ABI, TRIGGER_CONTRACT_ADDRESS } from './triggerAbi.js';
 
 /**
  * ChequeManager - A class that provides comprehensive management of the Aqua Cheque system
@@ -15,6 +16,7 @@ import {
 export class ChequeManager {
   private provider: ethers.Provider;
   private chequeContract: ethers.Contract;
+  private chequeTriggereContract: ethers.Contract;
   private verificationTrigger: ethers.Contract;
   private payoutTrigger: ethers.Contract;
   private senderWallet: ethers.Wallet | null = null;
@@ -26,6 +28,7 @@ export class ChequeManager {
   constructor(provider: ethers.Provider) {
     this.provider = provider;
     this.chequeContract = new ethers.Contract(CHEQUE_CONTRACT_ADDRESS, CHEQUE_ABI, provider);
+    this.chequeTriggereContract = new ethers.Contract(TRIGGER_CONTRACT_ADDRESS, TRIGGER_ABI, provider);
     this.verificationTrigger = new ethers.Contract(VERIFICATION_TRIGGER_ADDRESS, VERIFICATION_TRIGGER_ABI, provider);
     this.payoutTrigger = new ethers.Contract(PAYOUT_TRIGGER_ADDRESS, PAYOUT_TRIGGER_ABI, provider);
   }
@@ -37,6 +40,7 @@ export class ChequeManager {
   connectWallet(privateKey: string): void {
     this.senderWallet = new ethers.Wallet(privateKey, this.provider);
     this.chequeContract = new ethers.Contract(CHEQUE_CONTRACT_ADDRESS, CHEQUE_ABI, this.senderWallet);
+    this.chequeTriggereContract = new ethers.Contract(TRIGGER_CONTRACT_ADDRESS, TRIGGER_ABI, this.senderWallet);
     this.verificationTrigger = new ethers.Contract(VERIFICATION_TRIGGER_ADDRESS, VERIFICATION_TRIGGER_ABI, this.senderWallet);
     this.payoutTrigger = new ethers.Contract(PAYOUT_TRIGGER_ADDRESS, PAYOUT_TRIGGER_ABI, this.senderWallet);
     console.log(`Connected wallet: ${this.senderWallet.address}`);
@@ -67,6 +71,7 @@ export class ChequeManager {
       throw new Error('Wallet not connected');
     }
     const owner = await this.chequeContract.owner();
+    console.log(`Owner: ${owner}`);
     return owner.toLowerCase() === this.senderWallet.address.toLowerCase();
   }
 
@@ -154,9 +159,9 @@ export class ChequeManager {
     // If receiver is not provided, use an empty string
     const receiverValue = receiver || "";
     
-    const tx = await this.chequeContract.depositCheque(
+    const tx = await this.chequeTriggereContract.addTrigger(
       sender,
-      receiverValue,
+      receiverValue, 
       amount,
       note,
       aquaTree,
@@ -220,6 +225,7 @@ export class ChequeManager {
     // Wait for the transaction to be mined to get the requestId from the event
     const receipt = await tx.wait();
     const event = receipt.events?.find((e: any) => e.event === 'VerificationRequested');
+    console.log("Event: ", receipt)
     const requestId = event?.args?.requestId;
     
     console.log(`Requested verification for cheque ${chequeId}, requestId: ${requestId}, tx: ${tx.hash}`);

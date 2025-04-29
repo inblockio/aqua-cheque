@@ -84,9 +84,8 @@ node dist/cheque-cli.js remove-creator <privateKey> <creatorAddress>
 node dist/cheque-cli.js deposit-cheque <privateKey> --sender "<sender>" --amount <amount> --note "<note>" --aqua "<aquaHash>" --form "{}" [--receiver "<receiver>"]
 ```
 
-#### Deposit a Cheque
 ```bash
-node dist/cheque-cli.js deposit-cheque "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" --sender "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" --amount 10 --note "Some note" --aqua "<aquaHash>" --form "{}"
+node dist/cheque-cli.js deposit-cheque "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" --sender "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" --amount 10 --note "Some note" --aqua "0x10" --form "{}" --receiver "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
 ```
 
 Note: The `--receiver` parameter is now optional. If omitted, an empty receiver will be used.

@@ -3,7 +3,7 @@ pragma solidity ^0.8.22;
 
 import {IWavsServiceManager} from "@wavs/interfaces/IWavsServiceManager.sol";
 import {IWavsServiceHandler} from "@wavs/interfaces/IWavsServiceHandler.sol";
-import {ICheque} from "interfaces/ICheque.sol";
+import {ICheque} from "../interfaces/ICheque.sol";
 
 contract ChequeContract is IWavsServiceHandler {
     address public owner;
@@ -74,6 +74,7 @@ contract ChequeContract is IWavsServiceHandler {
      * @param _note Additional note for the cheque
      * @param aquaTree The Aqua tree hash
      * @param formContent The form content hash
+     * @param level The level of verification
      */
     function depositCheque(
         string memory sender,
@@ -81,7 +82,8 @@ contract ChequeContract is IWavsServiceHandler {
         uint256 amount,
         string memory _note,
         string memory aquaTree,
-        string memory formContent
+        string memory formContent,
+        string memory level
     ) external onlyAuthorized {
         ICheque.Cheque memory _cheque = ICheque.Cheque({
             sender: sender,
@@ -90,7 +92,11 @@ contract ChequeContract is IWavsServiceHandler {
             note: _note,
             isPaid: false,
             aquaTree: aquaTree,
-            formContent: formContent
+            formContent: formContent,
+            level: level,
+            levelOneVerified: false,
+            levelTwoVerified: false,
+            isCancelled: false
         });
 
         chequeCounter++;
@@ -207,6 +213,49 @@ contract ChequeContract is IWavsServiceHandler {
         emit ChequeRecalled(_chequeId);
     }
 
+    /**
+     * @notice Verify a cheque at level one
+     * @param _chequeId The ID of the cheque to verify
+     */
+    function verifyLevelOne(uint256 _chequeId) external onlyAuthorized {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        require(!cheque.levelOneVerified, "Level one already verified");
+        require(!cheque.isCancelled, "Cheque is cancelled");
+
+        cheque.levelOneVerified = true;
+        emit LevelOneVerified(_chequeId);
+    }
+
+    /**
+     * @notice Verify a cheque at level two
+     * @param _chequeId The ID of the cheque to verify
+     */
+    function verifyLevelTwo(uint256 _chequeId) external onlyAuthorized {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        require(cheque.levelOneVerified, "Level one not verified");
+        require(!cheque.levelTwoVerified, "Level two already verified");
+        require(!cheque.isCancelled, "Cheque is cancelled");
+
+        cheque.levelTwoVerified = true;
+        emit LevelTwoVerified(_chequeId);
+    }
+
+    /**
+     * @notice Cancel a cheque
+     * @param _chequeId The ID of the cheque to cancel
+     */
+    function cancelCheque(uint256 _chequeId) external onlyAuthorized {
+        require(_chequeId > 0 && _chequeId <= chequeCounter, "Invalid cheque ID");
+        ICheque.Cheque storage cheque = cheques[_chequeId];
+        require(!cheque.isPaid, "Cannot cancel paid cheque");
+        require(!cheque.isCancelled, "Cheque already cancelled");
+
+        cheque.isCancelled = true;
+        emit ChequeCancelled(_chequeId);
+    }
+
     // View functions
     function getCheque(
         ICheque.ChequeId chequeId
@@ -248,6 +297,9 @@ contract ChequeContract is IWavsServiceHandler {
     event VerificationResult(uint256 indexed chequeId, bool success);
     event ChequeRecalled(uint256 indexed chequeId);
     event ChequeReceiverUpdated(uint256 indexed chequeId, string receiver);
+    event LevelOneVerified(uint256 indexed chequeId);
+    event LevelTwoVerified(uint256 indexed chequeId);
+    event ChequeCancelled(uint256 indexed chequeId);
 
     // Function to allow anyone to send ETH directly to the contract
     receive() external payable {

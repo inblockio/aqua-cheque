@@ -11,13 +11,17 @@ interface ICheque {
     }
 
     struct Cheque {
-        string sender;
-        string receiver;
+        address sender;
+        address receiver;
         uint256 amount;
         string note;
         bool isPaid;
         string aquaTree;
         string formContent;
+        string level;
+        bool levelOneVerified;
+        bool levelTwoVerified;
+        bool isCancelled;
     }
 
     struct ChequeInfo {
@@ -26,38 +30,43 @@ interface ICheque {
     }
 
     event ChequeDeposited(ChequeId chequeId, bytes data);
-
-    event ChequePaid(
-        uint256 chequeId,
-        address indexed receiver,
-        uint256 amount
-    );
-
+    event ChequePaid(uint256 chequeId, address indexed receiver, uint256 amount);
     event FundsReceived(address indexed sender, uint256 amount);
+    event LevelOneVerified(uint256 indexed chequeId);
+    event LevelTwoVerified(uint256 indexed chequeId);
+    event ChequeCancelled(uint256 indexed chequeId);
+    event ChequeReceiverUpdated(uint256 indexed chequeId, string newReceiver);
 
     function depositCheque(
-        address _receiver,
-        string memory _note
-    ) external payable;
+        string memory sender,
+        string memory receiver,
+        uint256 amount,
+        string memory note,
+        string memory aquaTree,
+        string memory formContent,
+        string memory level
+    ) external;
 
-    function payCheque(uint256 _chequeId) external;
-
+    function updateChequeReceiver(uint256 _chequeId, string memory _receiver) external;
+    function verifyLevelOne(uint256 _chequeId) external;
+    function verifyLevelTwo(uint256 _chequeId) external;
+    function cancelCheque(uint256 _chequeId) external;
+    function payCheque(uint256 _chequeId, address payable recipientAddress) external;
     function getBalance() external view returns (uint256);
-
     function owner() external view returns (address);
-
-    function cheques(
-        uint256 _chequeId
-    )
-        external
-        view
-        returns (
-            address sender,
-            address receiver,
-            uint256 amount,
-            string memory note,
-            bool isPaid
-        );
-
     function chequeCounter() external view returns (uint256);
+
+    function cheques(uint256 _chequeId) external view returns (
+        string memory sender,
+        string memory receiver,
+        uint256 amount,
+        string memory note,
+        bool isPaid,
+        string memory aquaTree,
+        string memory formContent,
+        string memory level,
+        bool levelOneVerified,
+        bool levelTwoVerified,
+        bool isCancelled
+    );
 }
