@@ -2,6 +2,9 @@ name: Rust
 
 on:
   pull_request:
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
 
 jobs:
   tests-stable:
